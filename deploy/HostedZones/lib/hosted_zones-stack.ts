@@ -13,8 +13,12 @@ export class HostedZonesStack extends cdk.Stack {
 
     const main = new MainHostedZone(this, "MainHostedZone", rootDomainName.valueAsString);
 
-    const outHostedZone = new cdk.CfnOutput(this, "Nameservers", {
+    new cdk.CfnOutput(this, "Nameservers", {
       value: cdk.Fn.join(",", main.hostedZone.hostedZoneNameServers || [])
+    })
+
+    new cdk.CfnOutput(this, "ZoneId", {
+      value: main.hostedZone.hostedZoneId
     })
   }
 }
