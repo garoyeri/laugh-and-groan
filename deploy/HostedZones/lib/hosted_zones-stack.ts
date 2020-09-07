@@ -1,9 +1,20 @@
-import * as cdk from '@aws-cdk/core';
+import * as cdk from "@aws-cdk/core";
+import { MainHostedZone } from "./main_hosted_zone";
 
 export class HostedZonesStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    // The code that defines your stack goes here
+    const rootDomainName = new cdk.CfnParameter(this, "RootDomainName", {
+      type: "String",
+      description: "Root Domain Name",
+      default: "laughandgroan.com",
+    });
+
+    const main = new MainHostedZone(this, "MainHostedZone", rootDomainName.valueAsString);
+
+    const outHostedZone = new cdk.CfnOutput(this, "Nameservers", {
+      value: cdk.Fn.join(",", main.hostedZone.hostedZoneNameServers || [])
+    })
   }
 }
