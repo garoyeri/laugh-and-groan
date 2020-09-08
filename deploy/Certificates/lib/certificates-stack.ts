@@ -17,12 +17,23 @@ export class CertificatesStack extends cdk.Stack {
       description: "Hosted Zone ID for the root hosted zone",
     });
 
-    const hostedZone = route53.HostedZone.fromHostedZoneId(this, "MainHostedZone", hostedZoneId.valueAsString);
+    const hostedZone = route53.HostedZone.fromHostedZoneAttributes(
+      this,
+      "MainHostedZone",
+      {
+        hostedZoneId: hostedZoneId.valueAsString,
+        zoneName: rootDomainName.valueAsString,
+      }
+    );
 
-    const certificate = new acm.Certificate(this, "RootCertificate", {
-      domainName: rootDomainName.valueAsString,
-      subjectAlternativeNames: ["*." + rootDomainName.valueAsString],
-      validation: acm.CertificateValidation.fromDns(hostedZone),
-    });
+    const certificate = new acm.DnsValidatedCertificate(
+      this,
+      "RootWildcardCertificate",
+      {
+        domainName: rootDomainName.valueAsString,
+        subjectAlternativeNames: ["*." + rootDomainName.valueAsString],
+        hostedZone: hostedZone,
+      }
+    );
   }
 }
