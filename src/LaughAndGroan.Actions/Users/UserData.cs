@@ -6,9 +6,12 @@ namespace LaughAndGroan.Actions.Users
     public class UserData
     {
         [DynamoDBHashKey]
-        public string UserId { get; set; }
-
-        [DynamoDBGlobalSecondaryIndexHashKey("UserEmail")]
         public string UserName { get; set; }
+
+        [DynamoDBGlobalSecondaryIndexHashKey("UserIdIndex")]
+        public string UserId { get; set; }
+        
+        [DynamoDBVersion]
+        public int? VersionNumber { get; set; }
     }
 }

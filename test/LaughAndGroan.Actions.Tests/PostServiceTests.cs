@@ -6,7 +6,7 @@
 
     using static Testing;
 
-    public class PostsTests
+    public class PostServiceTests
     {
         public Task SetUp()
         {
@@ -22,11 +22,13 @@
             postCreated.UserId.ShouldBe(userId.ToString());
             postCreated.PostId.ShouldNotBeNullOrWhiteSpace();
 
-            var postFound = await Posts.GetPost(userId.ToString(), postCreated.PostId);
+            var postFound = await Posts.GetPost(postCreated.PostId);
 
             postFound.PostId.ShouldBe(postCreated.PostId);
             postFound.Url.ShouldBe(postCreated.Url);
             postFound.UserId.ShouldBe(userId.ToString());
         }
+
+        
     }
 }

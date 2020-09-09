@@ -24,6 +24,7 @@
             var contextConfig = new DynamoDBContextConfig()
             {
                 TableNamePrefix = settings.TableNamePrefix,
+                ConsistentRead = true,
             };
             _context = new DynamoDBContext(client, contextConfig);
         }
@@ -39,15 +40,23 @@
             return postData;
         }
 
-        public async Task<PostData> GetPost(string userId, string postId, CancellationToken cancellationToken = default)
+        public async Task<PostData> GetPost(string postId, CancellationToken cancellationToken = default)
         {
-            var postFound = await _context.LoadAsync<PostData>(userId, postId, cancellationToken);
+            var postFound = await _context.LoadAsync<PostData>(postId, cancellationToken);
             return postFound;
         }
 
-        public Task DeletePost(string userId, string postId, CancellationToken cancellationToken = default)
+        public async Task<bool> DeletePost(string userId, string postId, CancellationToken cancellationToken = default)
         {
-            return _context.DeleteAsync<PostData>(userId, postId, cancellationToken);
+            var postFound = await GetPost(postId, cancellationToken);
+            if (postFound == null)
+                return true;
+            if (postFound.UserId != userId)
+                return false;
+
+            await _context.DeleteAsync<PostData>(postId, cancellationToken);
+
+            return true;
         }
     }
 }

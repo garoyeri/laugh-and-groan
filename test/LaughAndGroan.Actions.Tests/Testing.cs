@@ -7,6 +7,7 @@
     using Amazon.DynamoDBv2.Model;
     using Posts;
     using Shouldly;
+    using Users;
 
     public static class Testing
     {
@@ -19,11 +20,13 @@
             };
             Client = new AmazonDynamoDBClient(new AmazonDynamoDBConfig {ServiceURL = Settings.DynamoDbUrl});
             Posts = new PostsService(Settings);
+            Users = new UsersService(Settings);
         }
 
         public static Settings Settings { get; }
         public static AmazonDynamoDBClient Client { get; }
         public static PostsService Posts { get; }
+        public static UsersService Users { get; }
 
         /// <summary>
         /// Create the tables in DynamoDB
@@ -44,7 +47,7 @@
                     TableName = usersTableName,
                     KeySchema = new List<KeySchemaElement>
                     {
-                        new KeySchemaElement("userId", KeyType.HASH)
+                        new KeySchemaElement("userName", KeyType.HASH)
                     },
                     AttributeDefinitions = new List<AttributeDefinition>
                     {
@@ -56,10 +59,10 @@
                     {
                         new GlobalSecondaryIndex
                         {
-                            IndexName = "UserNamesIndex",
+                            IndexName = "UserIdIndex",
                             KeySchema = new List<KeySchemaElement>
                             {
-                                new KeySchemaElement("userName", KeyType.HASH)
+                                new KeySchemaElement("userId", KeyType.HASH)
                             },
                             Projection = new Projection { ProjectionType = ProjectionType.ALL },
                             ProvisionedThroughput = new ProvisionedThroughput(10, 5)
@@ -78,18 +81,34 @@
                 (await WaitForTable(postsTableName)).ShouldBeNull();
             }
 
-            var postsCreateTableResponse = await Client.CreateTableAsync(postsTableName,
-                new List<KeySchemaElement>
+            var postsCreateTableResponse = await Client.CreateTableAsync(new CreateTableRequest
                 {
-                    new KeySchemaElement("userId", KeyType.HASH),
-                    new KeySchemaElement("postId", KeyType.RANGE)
-                },
-                new List<AttributeDefinition>
-                {
-                    new AttributeDefinition("userId", ScalarAttributeType.S),
-                    new AttributeDefinition("postId", ScalarAttributeType.S)
-                },
-                new ProvisionedThroughput(10, 5)
+                    TableName = postsTableName,
+                    KeySchema = new List<KeySchemaElement>
+                    {
+                        new KeySchemaElement("postId", KeyType.HASH),
+                    },
+                    AttributeDefinitions = new List<AttributeDefinition>
+                    {
+                        new AttributeDefinition("userId", ScalarAttributeType.S),
+                        new AttributeDefinition("postId", ScalarAttributeType.S)
+                    },
+                    GlobalSecondaryIndexes = new List<GlobalSecondaryIndex>
+                    {
+                        new GlobalSecondaryIndex
+                        {
+                            IndexName = "UserIdIndex",
+                            KeySchema = new List<KeySchemaElement>
+                            {
+                                new KeySchemaElement("userId", KeyType.HASH),
+                                new KeySchemaElement("postId", KeyType.RANGE)
+                            },
+                            Projection = new Projection { ProjectionType = ProjectionType.ALL },
+                            ProvisionedThroughput = new ProvisionedThroughput(10, 5)
+                        }
+                    },
+                    ProvisionedThroughput = new ProvisionedThroughput(10, 5)
+                }
             );
             (await WaitForTable(postsTableName, postsCreateTableResponse.TableDescription.TableStatus)).ShouldBe(TableStatus.ACTIVE);
         }
