@@ -1,4 +1,4 @@
-namespace LaughAndGroan.Actions
+namespace LaughAndGroan.Actions.Users
 {
     using Amazon.DynamoDBv2.DataModel;
 
@@ -8,6 +8,7 @@ namespace LaughAndGroan.Actions
         [DynamoDBHashKey]
         public string UserId { get; set; }
 
+        [DynamoDBGlobalSecondaryIndexHashKey("UserEmail")]
         public string UserName { get; set; }
     }
 }
