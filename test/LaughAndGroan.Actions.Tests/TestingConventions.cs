@@ -13,6 +13,11 @@
 
     public class ExecutionConvention : Execution
     {
+        public ExecutionConvention()
+        {
+            Testing.CreateTables().GetAwaiter().GetResult();
+        }
+
         public void Execute(TestClass testClass)
         {
             testClass.RunCases(@case =>
