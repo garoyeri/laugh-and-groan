@@ -1,4 +1,4 @@
-﻿namespace LaughAndGroan.Actions
+﻿namespace LaughAndGroan.Actions.Posts
 {
     public class PostApiRequest
     {

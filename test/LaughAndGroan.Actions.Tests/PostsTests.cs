@@ -6,6 +6,7 @@
     using Amazon.DynamoDBv2;
     using Amazon.DynamoDBv2.Model;
     using NUlid;
+    using Posts;
     using Shouldly;
 
     public class PostsTests
