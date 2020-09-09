@@ -1,5 +1,7 @@
 ﻿namespace LaughAndGroan.Actions.Users
 {
+    using System.Collections.Generic;
+    using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
     using Amazon.DynamoDBv2;
@@ -8,13 +10,12 @@
     public class UsersService
     {
         private readonly DynamoDBContext _context;
-        private readonly AmazonDynamoDBClient _client;
 
-        public UsersService(Settings settings = null)
+        public UsersService(Settings settings = null, DynamoDBContext context = null)
         {
             settings ??= new ConfigurationProvider().Settings;
 
-            _client = settings.DynamoDbUrl == null
+            var client = settings.DynamoDbUrl == null
                 ? new AmazonDynamoDBClient()
                 : new AmazonDynamoDBClient(new AmazonDynamoDBConfig {ServiceURL = settings.DynamoDbUrl});
             var contextConfig = new DynamoDBContextConfig()
@@ -22,7 +23,7 @@
                 TableNamePrefix = settings.TableNamePrefix,
                 ConsistentRead = true,
             };
-            _context = new DynamoDBContext(_client, contextConfig);
+            _context = context ?? new DynamoDBContext(client, contextConfig);
         }
 
         public async Task<UserData> Create(string userId, string userName = null,
@@ -39,6 +40,19 @@
         public Task<UserData> Get(string userName, CancellationToken cancellationToken = default)
         {
             return _context.LoadAsync<UserData>(userName, cancellationToken);
+        }
+
+        public async Task<List<UserData>> Get(IEnumerable<string> userNames, CancellationToken cancellationToken = default)
+        {
+            if (!userNames.Any())
+                return new List<UserData>(0);
+
+            var batch = _context.CreateBatchGet<UserData>();
+            foreach (var name in userNames)
+                batch.AddKey(name);
+
+            await batch.ExecuteAsync(cancellationToken);
+            return batch.Results;
         }
     }
 }

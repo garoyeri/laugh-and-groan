@@ -87,11 +87,13 @@
                     KeySchema = new List<KeySchemaElement>
                     {
                         new KeySchemaElement("postId", KeyType.HASH),
+                        new KeySchemaElement("postId", KeyType.RANGE)
                     },
                     AttributeDefinitions = new List<AttributeDefinition>
                     {
                         new AttributeDefinition("userId", ScalarAttributeType.S),
-                        new AttributeDefinition("postId", ScalarAttributeType.S)
+                        new AttributeDefinition("postId", ScalarAttributeType.S),
+                        new AttributeDefinition("postIdRange", ScalarAttributeType.S)
                     },
                     GlobalSecondaryIndexes = new List<GlobalSecondaryIndex>
                     {

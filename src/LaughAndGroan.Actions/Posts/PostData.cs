@@ -10,6 +10,9 @@ namespace LaughAndGroan.Actions.Posts
         [DynamoDBHashKey]
         public string PostId { get; set; }
 
+        [DynamoDBRangeKey]
+        public string PostIdRange { get; set; }
+
         public string UserId { get; set; }
         
         public string Url { get; set; }
