@@ -35,5 +35,10 @@ export class CertificatesStack extends cdk.Stack {
         hostedZone: hostedZone,
       }
     );
+
+    new cdk.CfnOutput(this, "CertificateArn", {
+      value: certificate.certificateArn,
+      description: "Root certificate ARN"
+    })
   }
 }
