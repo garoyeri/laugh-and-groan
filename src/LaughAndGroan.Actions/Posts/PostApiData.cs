@@ -14,4 +14,9 @@
         public string AuthorId { get; set; }
         public DateTimeOffset WhenPublished { get; set; }
     }
+
+    public class GetPostsResponse
+    {
+        public PostApiResponse[] Data { get; set; }
+    }
 }
