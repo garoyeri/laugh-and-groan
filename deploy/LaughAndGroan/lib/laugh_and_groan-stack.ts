@@ -2,6 +2,8 @@ import * as cdk from "@aws-cdk/core";
 import * as acm from "@aws-cdk/aws-certificatemanager";
 import * as route53 from "@aws-cdk/aws-route53";
 import { Authentication } from "./authentication";
+import { Lambdas } from "./lambdas";
+import { Database } from "./database";
 
 export class LaughAndGroanStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
@@ -27,6 +29,12 @@ export class LaughAndGroanStack extends cdk.Stack {
       }
     );
 
+    const tableNamePrefix = new cdk.CfnParameter(this, "TableNamePrefix", {
+      type: "String",
+      description: "Table name prefix for DynamoDB tables",
+      default: "LaughAndGroan"
+    });
+
     const hostedZone = route53.HostedZone.fromHostedZoneAttributes(
       this,
       "MainHostedZone",
@@ -42,6 +50,8 @@ export class LaughAndGroanStack extends cdk.Stack {
       rootCertificateArn.valueAsString
     );
 
-    const auth = new Authentication(this, "Authentication", cert, hostedZone);
+    const database = new Database(this, "Database", tableNamePrefix.valueAsString);
+    const lambdas = new Lambdas(this, "Lambdas", [database.usersTable, database.postsTable]);
+    const auth = new Authentication(this, "Authentication", cert, hostedZone, lambdas.postAuthTrigger);
   }
 }

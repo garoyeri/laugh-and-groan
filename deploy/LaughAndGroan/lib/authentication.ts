@@ -16,16 +16,10 @@ export class Authentication extends cdk.Construct {
     scope: cdk.Construct,
     id: string,
     rootCertificate: ICertificate,
-    rootHostedZone: route53.IHostedZone
+    rootHostedZone: route53.IHostedZone,
+    postAuthTrigger: lambda.Function
   ) {
     super(scope, id);
-
-    const postAuthTrigger = new lambda.Function(this, "UserPoolPostAuthenticationTrigger", {
-      runtime: lambda.Runtime.DOTNET_CORE_3_1,
-      code: lambda.Code.fromAsset("resource/LaughAndGroan.zip"),
-      handler: "LaughAndGroan.Actions::LaughAndGroan.Actions.Users.PostAuthenticationHandler::CreateUserAfterAuthentication",
-      logRetention: 30,
-    });  
 
     this.userPool = new cognito.UserPool(this, "UserPool", {
       accountRecovery: AccountRecovery.EMAIL_ONLY,
