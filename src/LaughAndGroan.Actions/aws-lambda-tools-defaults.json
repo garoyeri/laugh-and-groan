@@ -12,5 +12,5 @@
   "function-runtime": "dotnetcore3.1",
   "function-memory-size": 256,
   "function-timeout": 30,
-  "function-handler": "LaughAndGroan.Actions::LaughAndGroan.Actions.Function::FunctionHandler"
+  "function-handler": "LaughAndGroan.Actions::LaughAndGroan.Actions.Users.PostAuthenticationHandler::CreateUserAfterAuthentication"
 }
