@@ -17,23 +17,25 @@
         private readonly MonotonicUlidRng _random;
         private readonly DynamoDBContext _context;
         private readonly UsersService _users;
+        private readonly Settings _settings;
 
         public PostsService(Settings settings = null, DynamoDBContext context = null)
         {
-            settings ??= new ConfigurationProvider().Settings;
+            _settings = settings;
+            _settings ??= new ConfigurationProvider().Settings;
             _random = new MonotonicUlidRng();
 
-            var client = settings.DynamoDbUrl == null
+            var client = _settings.DynamoDbUrl == null
                 ? new AmazonDynamoDBClient()
-                : new AmazonDynamoDBClient(new AmazonDynamoDBConfig {ServiceURL = settings.DynamoDbUrl});
+                : new AmazonDynamoDBClient(new AmazonDynamoDBConfig {ServiceURL = _settings.DynamoDbUrl});
             var contextConfig = new DynamoDBContextConfig()
             {
-                TableNamePrefix = settings.TableNamePrefix,
+                TableNamePrefix = _settings.TableNamePrefix,
                 ConsistentRead = true,
             };
             _context = context ?? new DynamoDBContext(client, contextConfig);
 
-            _users = new UsersService(settings, _context);
+            _users = new UsersService(_settings, _context);
         }
 
         public async Task<PostData> CreatePost(string userId, string url, DateTimeOffset? timestamp = null, CancellationToken cancellationToken = default)
@@ -41,7 +43,7 @@
             timestamp ??= DateTimeOffset.UtcNow;
             var postId = Ulid.NewUlid(timestamp.Value.ToUniversalTime(), _random).ToString();
 
-            var postData = new PostData { PostId = postId, PostIdRange = postId, Url = url, UserId = userId};
+            var postData = new PostData { PostId = postId, Url = url, UserId = userId, Type = "post"};
             await _context.SaveAsync(postData, cancellationToken);
 
             return postData;
@@ -49,7 +51,7 @@
 
         public async Task<PostData> GetPost(string postId, CancellationToken cancellationToken = default)
         {
-            var postFound = await _context.LoadAsync<PostData>(postId, postId, cancellationToken);
+            var postFound = await _context.LoadAsync<PostData>(postId, cancellationToken);
             return postFound;
         }
 
@@ -73,19 +75,28 @@
             var usersFound = await _users.Get(byUserNames, cancellationToken);
 
             var conditions = new List<ScanCondition>(2);
-            conditions.Add(new ScanCondition("postIdRange", ScanOperator.GreaterThan, fromPostId));
+            if (fromPostId != null)
+                conditions.Add(new ScanCondition("PostId", ScanOperator.LessThan, fromPostId));
             if (usersFound.Any())
-                conditions.Add(new ScanCondition("userId", ScanOperator.In, usersFound.Select(u => (object)u.UserId).ToArray()));
+                conditions.Add(new ScanCondition("UserId", ScanOperator.In, usersFound.Select(u => (object)u.UserId).ToArray()));
 
-            var scan = _context.ScanAsync<PostData>(conditions,
-                new DynamoDBOperationConfig {ConditionalOperator = ConditionalOperatorValues.And});
+            var query = _context.QueryAsync<PostData>("post", new DynamoDBOperationConfig
+            {
+                TableNamePrefix = _settings.TableNamePrefix,
+                ConditionalOperator = ConditionalOperatorValues.And,
+                QueryFilter = conditions,
+                BackwardQuery = true,
+                IndexName = "ChronologicalPostsIndex",
+                ConsistentRead = false
+            });
+
             var results = new List<PostData>(pageSize);
 
             do
             {
-                var nextResult = await scan.GetNextSetAsync(cancellationToken);
+                var nextResult = await query.GetNextSetAsync(cancellationToken);
                 results.AddRange(nextResult);
-            } while (!scan.IsDone && results.Count <= pageSize);
+            } while (!query.IsDone && results.Count < pageSize);
 
             return results;
         }

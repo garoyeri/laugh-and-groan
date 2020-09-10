@@ -8,18 +8,20 @@ namespace LaughAndGroan.Actions.Posts
     public class PostData
     {
         [DynamoDBHashKey]
+        [DynamoDBGlobalSecondaryIndexRangeKey("UserIdIndex", "ChronologicalPostsIndex")]
         public string PostId { get; set; }
 
-        [DynamoDBRangeKey]
-        public string PostIdRange { get; set; }
-
+        [DynamoDBGlobalSecondaryIndexHashKey("UserIdIndex")]
         public string UserId { get; set; }
         
         public string Url { get; set; }
 
-        [DynamoDBVersion]
+        [DynamoDBGlobalSecondaryIndexHashKey("ChronologicalPostsIndex")]
+        public string Type { get; set; }
+
         public int? VersionNumber { get; set; }
 
+        [DynamoDBProperty]
         public List<PostReaction> Reactions { get; set; }
     }
 

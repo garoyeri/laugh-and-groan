@@ -86,14 +86,13 @@
                     TableName = postsTableName,
                     KeySchema = new List<KeySchemaElement>
                     {
-                        new KeySchemaElement("postId", KeyType.HASH),
-                        new KeySchemaElement("postId", KeyType.RANGE)
+                        new KeySchemaElement("postId", KeyType.HASH)
                     },
                     AttributeDefinitions = new List<AttributeDefinition>
                     {
                         new AttributeDefinition("userId", ScalarAttributeType.S),
                         new AttributeDefinition("postId", ScalarAttributeType.S),
-                        new AttributeDefinition("postIdRange", ScalarAttributeType.S)
+                        new AttributeDefinition("type", ScalarAttributeType.S),
                     },
                     GlobalSecondaryIndexes = new List<GlobalSecondaryIndex>
                     {
@@ -106,6 +105,20 @@
                                 new KeySchemaElement("postId", KeyType.RANGE)
                             },
                             Projection = new Projection { ProjectionType = ProjectionType.ALL },
+                            ProvisionedThroughput = new ProvisionedThroughput(10, 5)
+                        },
+                        new GlobalSecondaryIndex
+                        {
+                            IndexName = "ChronologicalPostsIndex",
+                            KeySchema = new List<KeySchemaElement>
+                            {
+                                new KeySchemaElement("type", KeyType.HASH),
+                                new KeySchemaElement("postId", KeyType.RANGE)
+                            },
+                            Projection = new Projection
+                            {
+                                ProjectionType = ProjectionType.ALL,
+                            },
                             ProvisionedThroughput = new ProvisionedThroughput(10, 5)
                         }
                     },
