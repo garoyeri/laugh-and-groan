@@ -1,7 +1,6 @@
 namespace LaughAndGroan.Actions.Posts
 {
     using System.Collections.Generic;
-    using System.IdentityModel.Tokens.Jwt;
     using System.Threading.Tasks;
     using Amazon.Lambda.APIGatewayEvents;
     using Amazon.Lambda.Core;
