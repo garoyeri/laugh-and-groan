@@ -1,12 +1,15 @@
 ﻿namespace LaughAndGroan.Actions.Users
 {
+    using System;
     using System.Text.Json;
     using System.Threading.Tasks;
     using Amazon.Lambda.Core;
+    using Amazon.Lambda.Serialization.SystemTextJson;
 
     public class PostAuthenticationHandler
     {
         readonly UsersService _users = new UsersService();
+        readonly ILambdaSerializer _serializer = new CamelCaseLambdaJsonSerializer();
 
         public async Task<JsonElement> CreateUserAfterAuthentication(JsonElement request, ILambdaContext context)
         {
@@ -35,7 +38,7 @@
                 }
             */
             
-            // TODO: create user
+            context.Logger.LogLine("Received request: " + JsonSerializer.Serialize(request));
 
             return request;
         }
