@@ -135,8 +135,11 @@ namespace LaughAndGroan.Actions.Posts
                 };
             }
 
-            request.QueryStringParameters.TryGetValue("by", out var userName);
-            request.QueryStringParameters.TryGetValue("from", out var fromPostId);
+            string userName = null;
+            string fromPostId = null;
+
+            request.QueryStringParameters?.TryGetValue("by", out userName);
+            request.QueryStringParameters?.TryGetValue("from", out fromPostId);
 
             try
             {

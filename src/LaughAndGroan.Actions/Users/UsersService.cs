@@ -17,7 +17,7 @@
 
             var client = settings.DynamoDbUrl == null
                 ? new AmazonDynamoDBClient()
-                : new AmazonDynamoDBClient(new AmazonDynamoDBConfig {ServiceURL = settings.DynamoDbUrl});
+                : new AmazonDynamoDBClient(new AmazonDynamoDBConfig { ServiceURL = settings.DynamoDbUrl });
             var contextConfig = new DynamoDBContextConfig()
             {
                 TableNamePrefix = settings.TableNamePrefix,
@@ -57,14 +57,17 @@
 
         public async Task<UserData> GetById(string userId, CancellationToken cancellationToken = default)
         {
-            var result = await _context.LoadAsync<UserData>(userId, new DynamoDBOperationConfig
+            var query = _context.QueryAsync<UserData>(userId, new DynamoDBOperationConfig
             {
-                IndexName = "UserIdIndex"
+                IndexName = "UserIdIndex",
+                ConsistentRead = false
             });
-                         
-            result ??= await Create(userId, cancellationToken: cancellationToken);
 
-            return result;
+            var results = await query.GetNextSetAsync(cancellationToken);
+            if (results.Any())
+                return results.First();
+
+            return await Create(userId, cancellationToken: cancellationToken);
         }
     }
 }
