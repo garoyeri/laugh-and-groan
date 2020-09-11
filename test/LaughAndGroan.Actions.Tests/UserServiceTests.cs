@@ -20,5 +20,20 @@
             userFound.UserId.ShouldBe(userId);
             userFound.UserName.ShouldBe(user.UserName);
         }
+
+        public async Task CanCreateNewUser()
+        {
+            var userId = Guid.NewGuid().ToString();
+            var user = await Users.GetById(userId);
+
+            user.ShouldNotBeNull();
+            user.UserId.ShouldBe(userId);
+            user.UserName.ShouldNotBeNullOrWhiteSpace();
+
+            var userFoundAgain = await Users.GetById(userId);
+            userFoundAgain.ShouldNotBeNull();
+            userFoundAgain.UserId.ShouldBe(userId);
+            userFoundAgain.UserName.ShouldNotBeNullOrWhiteSpace();
+        }
     }
 }

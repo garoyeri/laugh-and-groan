@@ -54,5 +54,17 @@
             await batch.ExecuteAsync(cancellationToken);
             return batch.Results;
         }
+
+        public async Task<UserData> GetById(string userId, CancellationToken cancellationToken = default)
+        {
+            var result = await _context.LoadAsync<UserData>(userId, new DynamoDBOperationConfig
+            {
+                IndexName = "UserIdIndex"
+            });
+                         
+            result ??= await Create(userId, cancellationToken: cancellationToken);
+
+            return result;
+        }
     }
 }
