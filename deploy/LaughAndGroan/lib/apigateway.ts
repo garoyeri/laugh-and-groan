@@ -1,6 +1,8 @@
 import * as cdk from "@aws-cdk/core";
 import * as api from "@aws-cdk/aws-apigatewayv2";
 import * as acm from "@aws-cdk/aws-certificatemanager";
+import * as route53 from "@aws-cdk/aws-route53";
+import * as route53targets from "@aws-cdk/aws-route53-targets";
 import { Lambdas } from "./lambdas";
 
 export interface ApiGatewayProps {
@@ -9,6 +11,7 @@ export interface ApiGatewayProps {
   certificate: acm.ICertificate;
   authIssuer?: string;
   authClientId?: string;
+  hostedZone: route53.IHostedZone;
 }
 
 export class ApiGateway extends cdk.Construct {
@@ -36,6 +39,19 @@ export class ApiGateway extends cdk.Construct {
       defaultDomainMapping: {
         domainName: gatewayDomainName,
       },
+    });
+
+    new route53.ARecord(this, "ApiGatewayDomainNameAlias", {
+      zone: props.hostedZone,
+      recordName: `api.${props.domainName}`,
+      target: route53.RecordTarget.fromAlias({
+        bind: (record) => {
+          return {
+            dnsName: gatewayDomainName.regionalDomainName,
+            hostedZoneId: gatewayDomainName.regionalHostedZoneId,
+          };
+        },
+      }),
     });
 
     let routes: api.HttpRoute[] = [];

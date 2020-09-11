@@ -37,6 +37,19 @@ export class LaughAndGroanStack extends cdk.Stack {
       default: "LaughAndGroan",
     });
 
+    const externalAuthClientId = new cdk.CfnParameter(this, "ExternalAuthClientId", {
+      type: "String",
+      description: "Client ID for external authentication provider",
+      default: "https://api.laughandgroan.com/"
+    });
+
+    const externalAuthIssuer = new cdk.CfnParameter(this, "ExternalAuthIssuer", {
+      type: "String",
+      description: "Issuer for external authentication provider",
+      default: "https://garoyeri.us.auth0.com/"
+    });
+
+
     const hostedZone = route53.HostedZone.fromHostedZoneAttributes(
       this,
       "MainHostedZone",
@@ -58,11 +71,11 @@ export class LaughAndGroanStack extends cdk.Stack {
     const lambdas = new Lambdas(this, "Lambdas", {
       tables: [database.usersTable, database.postsTable],
     });
-    const auth = new Authentication(this, "Authentication", {
-      rootCertificate: cert,
-      rootHostedZone: hostedZone,
-      postAuthTrigger: lambdas.postAuthTrigger,
-    });
+    // const auth = new Authentication(this, "Authentication", {
+    //   rootCertificate: cert,
+    //   rootHostedZone: hostedZone,
+    //   postAuthTrigger: lambdas.postAuthTrigger,
+    // });
     const frontend = new Frontend(this, "Frontend", {
       domainName: "laughandgroan.com", //rootDomainName.valueAsString,
       certificate: cert,
@@ -71,8 +84,9 @@ export class LaughAndGroanStack extends cdk.Stack {
       domainName: "laughandgroan.com",
       certificate: cert,
       lambdas: lambdas,
-      authClientId: auth.userPoolClient.userPoolClientId,
-      authIssuer: auth.userPool.userPoolProviderUrl,
+      authClientId: externalAuthClientId.valueAsString, //auth.userPoolClient.userPoolClientId,
+      authIssuer: externalAuthIssuer.valueAsString, //auth.userPool.userPoolProviderUrl,
+      hostedZone: hostedZone,
     })
   }
 }
