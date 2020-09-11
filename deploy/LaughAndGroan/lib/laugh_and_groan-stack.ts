@@ -58,11 +58,11 @@ export class LaughAndGroanStack extends cdk.Stack {
     const lambdas = new Lambdas(this, "Lambdas", {
       tables: [database.usersTable, database.postsTable],
     });
-    // const auth = new Authentication(this, "Authentication", {
-    //   rootCertificate: cert,
-    //   rootHostedZone: hostedZone,
-    //   postAuthTrigger: lambdas.postAuthTrigger,
-    // });
+    const auth = new Authentication(this, "Authentication", {
+      rootCertificate: cert,
+      rootHostedZone: hostedZone,
+      postAuthTrigger: lambdas.postAuthTrigger,
+    });
     const frontend = new Frontend(this, "Frontend", {
       domainName: "laughandgroan.com", //rootDomainName.valueAsString,
       certificate: cert,
@@ -71,6 +71,8 @@ export class LaughAndGroanStack extends cdk.Stack {
       domainName: "laughandgroan.com",
       certificate: cert,
       lambdas: lambdas,
+      authClientId: auth.userPoolClient.userPoolClientId,
+      authIssuer: auth.userPool.userPoolProviderUrl,
     })
   }
 }

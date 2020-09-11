@@ -34,6 +34,12 @@ export class Authentication extends cdk.Construct {
       lambdaTriggers: {
         postAuthentication: props.postAuthTrigger
       },
+      selfSignUpEnabled: true,
+      signInAliases: {
+        username: false,
+        email: true,
+        phone: false,
+      },
     });
 
     this.userPoolClient = new cognito.UserPoolClient(this, "UserPoolClient", {

@@ -7,6 +7,8 @@ export interface ApiGatewayProps {
   domainName: string;
   lambdas: Lambdas;
   certificate: acm.ICertificate;
+  authIssuer?: string;
+  authClientId?: string;
 }
 
 export class ApiGateway extends cdk.Construct {
@@ -36,41 +38,71 @@ export class ApiGateway extends cdk.Construct {
       },
     });
 
+    let routes: api.HttpRoute[] = [];
+
     // POST /posts
-    gateway.addRoutes({
-      path: "/posts",
-      methods: [api.HttpMethod.POST],
-      integration: new api.LambdaProxyIntegration({
-        handler: props.lambdas.createPostLambda,
-      }),
-    });
+    routes = routes.concat(
+      gateway.addRoutes({
+        path: "/posts",
+        methods: [api.HttpMethod.POST],
+        integration: new api.LambdaProxyIntegration({
+          handler: props.lambdas.createPostLambda,
+        }),
+      })
+    );
 
     // GET /posts?from={postId}&by={authorId}
-    gateway.addRoutes({
-      path: "/posts",
-      methods: [api.HttpMethod.GET],
-      integration: new api.LambdaProxyIntegration({
-        handler: props.lambdas.getPostsLambda,
-      }),
-    });
+    routes = routes.concat(
+      gateway.addRoutes({
+        path: "/posts",
+        methods: [api.HttpMethod.GET],
+        integration: new api.LambdaProxyIntegration({
+          handler: props.lambdas.getPostsLambda,
+        }),
+      })
+    );
 
     // GET /posts/{postId}
-    gateway.addRoutes({
-      path: "/posts/{postId}",
-      methods: [api.HttpMethod.GET],
-      integration: new api.LambdaProxyIntegration({
-        handler: props.lambdas.getPostLambda,
-      }),
-    });
+    routes = routes.concat(
+      gateway.addRoutes({
+        path: "/posts/{postId}",
+        methods: [api.HttpMethod.GET],
+        integration: new api.LambdaProxyIntegration({
+          handler: props.lambdas.getPostLambda,
+        }),
+      })
+    );
 
     // DELETE /posts/{postId}
-    gateway.addRoutes({
-      path: "/posts/{postId}",
-      methods: [api.HttpMethod.DELETE],
-      integration: new api.LambdaProxyIntegration({
-        handler: props.lambdas.deletePostLambda,
-      }),
-    });
+    routes = routes.concat(
+      gateway.addRoutes({
+        path: "/posts/{postId}",
+        methods: [api.HttpMethod.DELETE],
+        integration: new api.LambdaProxyIntegration({
+          handler: props.lambdas.deletePostLambda,
+        }),
+      })
+    );
+
+    if (props.authIssuer && props.authClientId) {
+      const authorizer = new api.CfnAuthorizer(this, "ApiGatewayAuthorizer", {
+        name: "ApiGatewayAuthorizer",
+        apiId: gateway.httpApiId,
+        authorizerType: "JWT",
+        identitySource: ["$request.header.Authorization"],
+        jwtConfiguration: {
+          audience: [props.authClientId],
+          issuer: props.authIssuer,
+        },
+      });
+
+      // https://dev.to/martzcodes/token-authorizers-with-apigatewayv2-tricks-apigwv1-doesn-t-want-you-to-know-41jn
+      routes.forEach((route) => {
+        const routeCfn = route.node.defaultChild as api.CfnRoute;
+        routeCfn.authorizerId = authorizer.ref;
+        routeCfn.authorizationType = "JWT";
+      });
+    }
 
     new cdk.CfnOutput(this, "ApiUrl", {
       value: gateway.url ?? "",
