@@ -12,6 +12,7 @@ export class Lambdas extends cdk.Construct {
   readonly getPostLambda: lambda.Function;
   readonly getPostsLambda: lambda.Function;
   readonly deletePostLambda: lambda.Function;
+  readonly getUserLambda: lambda.Function;
 
   constructor(scope: cdk.Construct, id: string, props: LambdasProps) {
     super(scope, id);
@@ -60,6 +61,14 @@ export class Lambdas extends cdk.Construct {
       logRetention: 30,
     });
 
+    this.getUserLambda = new lambda.Function(this, "GetUserFunction", {
+      runtime: lambda.Runtime.DOTNET_CORE_3_1,
+      code: lambda.Code.fromAsset("resource/LaughAndGroan.zip"),
+      handler:
+        "LaughAndGroan.Actions::LaughAndGroan.Actions.Users.UsersHandler::GetMe",
+      logRetention: 30,
+    });
+
     // give every lambda permission to use the dynamo tables
     [
       this.postAuthTrigger,
@@ -67,6 +76,7 @@ export class Lambdas extends cdk.Construct {
       this.getPostLambda,
       this.getPostsLambda,
       this.createPostLambda,
+      this.getUserLambda,
     ].forEach((l) => {
       props.tables.forEach((t) => {
         t.grantReadWriteData(l);

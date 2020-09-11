@@ -32,7 +32,7 @@ export class ApiGateway extends cdk.Construct {
           api.HttpMethod.PUT,
           api.HttpMethod.DELETE,
         ],
-        allowOrigins: [`https://${props.domainName}`],
+        allowOrigins: [`https://${props.domainName}`, `http://localhost:3000`],
         maxAge: cdk.Duration.minutes(1),
         allowCredentials: true,
       },
@@ -96,6 +96,17 @@ export class ApiGateway extends cdk.Construct {
         methods: [api.HttpMethod.DELETE],
         integration: new api.LambdaProxyIntegration({
           handler: props.lambdas.deletePostLambda,
+        }),
+      })
+    );
+
+    // GET /users/me
+    routes = routes.concat(
+      gateway.addRoutes({
+        path: "/users/me",
+        methods: [api.HttpMethod.GET],
+        integration: new api.LambdaProxyIntegration({
+          handler: props.lambdas.getUserLambda,
         }),
       })
     );
