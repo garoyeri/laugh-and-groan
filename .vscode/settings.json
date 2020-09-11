@@ -1,0 +1,6 @@
+{
+  "files.exclude": {
+    "deploy/**/*.js": { "when": "$(basename).ts" },
+    "deploy/**/*.d.ts": { "when": "$(basename).ts" },
+  }
+}
