@@ -26,6 +26,7 @@ export class Lambdas extends cdk.Construct {
         handler:
           "LaughAndGroan.Actions::LaughAndGroan.Actions.Users.PostAuthenticationHandler::CreateUserAfterAuthentication",
         logRetention: 30,
+        timeout: cdk.Duration.seconds(30),
       }
     );
 
@@ -35,6 +36,7 @@ export class Lambdas extends cdk.Construct {
       handler:
         "LaughAndGroan.Actions::LaughAndGroan.Actions.Posts.PostsHandler::Create",
       logRetention: 30,
+      timeout: cdk.Duration.seconds(30),
     });
 
     this.getPostLambda = new lambda.Function(this, "GetPostFunction", {
@@ -43,6 +45,7 @@ export class Lambdas extends cdk.Construct {
       handler:
         "LaughAndGroan.Actions::LaughAndGroan.Actions.Posts.PostsHandler::Get",
       logRetention: 30,
+      timeout: cdk.Duration.seconds(30),
     });
 
     this.getPostsLambda = new lambda.Function(this, "GetPostsFunction", {
@@ -51,6 +54,7 @@ export class Lambdas extends cdk.Construct {
       handler:
         "LaughAndGroan.Actions::LaughAndGroan.Actions.Posts.PostsHandler::GetPosts",
       logRetention: 30,
+      timeout: cdk.Duration.seconds(30),
     });
 
     this.deletePostLambda = new lambda.Function(this, "DeletePostFunction", {
@@ -59,6 +63,7 @@ export class Lambdas extends cdk.Construct {
       handler:
         "LaughAndGroan.Actions::LaughAndGroan.Actions.Posts.PostsHandler::Delete",
       logRetention: 30,
+      timeout: cdk.Duration.seconds(30),
     });
 
     this.getUserLambda = new lambda.Function(this, "GetUserFunction", {
@@ -67,6 +72,7 @@ export class Lambdas extends cdk.Construct {
       handler:
         "LaughAndGroan.Actions::LaughAndGroan.Actions.Users.UsersHandler::GetMe",
       logRetention: 30,
+      timeout: cdk.Duration.seconds(30),
     });
 
     // give every lambda permission to use the dynamo tables
@@ -79,7 +85,7 @@ export class Lambdas extends cdk.Construct {
       this.getUserLambda,
     ].forEach((l) => {
       props.tables.forEach((t) => {
-        t.grantReadWriteData(l);
+        t.grantFullAccess(l);
       });
     });
   }
