@@ -43,6 +43,10 @@ task Publish -depends Compile -description "Publish the primary projects for dis
     exec { dotnet lambda package $publish/LaughAndGroan.zip --msbuild-parameters -p:"Product=$($product)" -p:"Copyright=$(get-copyright)" -p:"Version=$($version)" } -workingDirectory src/LaughAndGroan.Actions
     exec { Copy-Item src/laugh-and-groan-website/build $publish/laugh-and-groan-website -Recurse }
 }
+
+task Deploy -depends Publish -description "Deploy the solution to AWS" {
+    exec { cdk deploy } -workingDirectory deploy/LaughAndGroan
+}
   
 task Clean -description "Clean out all the binary folders" {
     exec { dotnet clean --configuration $configuration /nologo } -workingDirectory src
