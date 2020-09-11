@@ -5,6 +5,7 @@ import { Authentication } from "./authentication";
 import { Lambdas } from "./lambdas";
 import { Database } from "./database";
 import { Frontend } from "./frontend";
+import { ApiGateway } from "./apigateway";
 
 export class LaughAndGroanStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
@@ -57,14 +58,19 @@ export class LaughAndGroanStack extends cdk.Stack {
     const lambdas = new Lambdas(this, "Lambdas", {
       tables: [database.usersTable, database.postsTable],
     });
-    const auth = new Authentication(this, "Authentication", {
-      rootCertificate: cert,
-      rootHostedZone: hostedZone,
-      postAuthTrigger: lambdas.postAuthTrigger,
-    });
+    // const auth = new Authentication(this, "Authentication", {
+    //   rootCertificate: cert,
+    //   rootHostedZone: hostedZone,
+    //   postAuthTrigger: lambdas.postAuthTrigger,
+    // });
     const frontend = new Frontend(this, "Frontend", {
       domainName: "laughandgroan.com", //rootDomainName.valueAsString,
       certificate: cert,
     });
+    const api = new ApiGateway(this, "ApiGateway", {
+      domainName: "laughandgroan.com",
+      certificate: cert,
+      lambdas: lambdas,
+    })
   }
 }

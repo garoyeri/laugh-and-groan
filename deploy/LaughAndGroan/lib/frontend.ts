@@ -16,7 +16,7 @@ export class Frontend extends cdk.Construct {
     const httpHeaders = new HttpHeaders(this, "HttpHeaders", {
       httpHeaders: {
         "Content-Security-Policy":
-          "default-src 'none'; img-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; object-src 'none'; connect-src 'self'",
+          "default-src *; style-src * 'unsafe-inline'; script-src * 'unsafe-inline' 'unsafe-eval'; img-src * data: blob: 'unsafe-inline'; connect-src * 'unsafe-inline'; frame-src *; media-src * data: blob: 'unsafe-inline';",
         "Strict-Transport-Security":
           "max-age=31536000; includeSubdomains; preload",
         "Referrer-Policy": "same-origin",
