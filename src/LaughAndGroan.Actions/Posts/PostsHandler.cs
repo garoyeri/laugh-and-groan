@@ -1,5 +1,6 @@
 namespace LaughAndGroan.Actions.Posts
 {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
@@ -14,8 +15,8 @@ namespace LaughAndGroan.Actions.Posts
 
         public async Task<APIGatewayHttpApiV2ProxyResponse> Create(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
         {
-            var token = request.GetAuthorization();
-            if (token == null)
+            var claims = request.GetAuthorization();
+            if (claims == null)
             {
                 return new APIGatewayHttpApiV2ProxyResponse
                 {
@@ -23,34 +24,10 @@ namespace LaughAndGroan.Actions.Posts
                 };
             }
 
-            var requestData = _serializer.DeserializeObject<PostApiRequest>(request.Body);
-            var postCreated = await _posts.CreatePost(token.Subject, requestData.Url);
-
-            return new APIGatewayHttpApiV2ProxyResponse
+            try
             {
-                Headers = new Dictionary<string, string>
-                {
-                    { "Content-Type", "application/json" }
-                },
-                Body = _serializer.SerializeObject(postCreated),
-                StatusCode = 200
-            };
-        }
-
-        public async Task<APIGatewayHttpApiV2ProxyResponse> Get(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
-        {
-            var token = request.GetAuthorization();
-            if (token == null)
-            {
-                return new APIGatewayHttpApiV2ProxyResponse
-                {
-                    StatusCode = 401
-                };
-            }
-
-            if (request.PathParameters.TryGetValue("postId", out var postId))
-            {
-                var postFound = await _posts.GetPost(postId);
+                var requestData = _serializer.DeserializeObject<PostApiRequest>(request.Body);
+                var postCreated = await _posts.CreatePost(claims["sub"], requestData.Url);
 
                 return new APIGatewayHttpApiV2ProxyResponse
                 {
@@ -58,21 +35,21 @@ namespace LaughAndGroan.Actions.Posts
                     {
                         { "Content-Type", "application/json" }
                     },
-                    Body = _serializer.SerializeObject(postFound),
+                    Body = _serializer.SerializeObject(postCreated),
                     StatusCode = 200
                 };
             }
-
-            return new APIGatewayHttpApiV2ProxyResponse
+            catch (Exception e)
             {
-                StatusCode = 404
-            };
+                context.Logger.LogLine("ERROR " + e);
+                throw;
+            }
         }
 
-        public async Task<APIGatewayHttpApiV2ProxyResponse> Delete(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
+        public async Task<APIGatewayHttpApiV2ProxyResponse> Get(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
         {
-            var token = request.GetAuthorization();
-            if (token == null)
+            var claims = request.GetAuthorization();
+            if (claims == null)
             {
                 return new APIGatewayHttpApiV2ProxyResponse
                 {
@@ -80,29 +57,77 @@ namespace LaughAndGroan.Actions.Posts
                 };
             }
 
-            var userId = token.Subject;
-
-            if (request.PathParameters.TryGetValue("postId", out var postId))
+            try
             {
-                if (!await _posts.DeletePost(userId, postId))
+                if (request.PathParameters.TryGetValue("postId", out var postId))
                 {
+                    var postFound = await _posts.GetPost(postId);
+
                     return new APIGatewayHttpApiV2ProxyResponse
                     {
-                        StatusCode = 403
+                        Headers = new Dictionary<string, string>
+                        {
+                            { "Content-Type", "application/json" }
+                        },
+                        Body = _serializer.SerializeObject(postFound),
+                        StatusCode = 200
                     };
                 }
+
+                return new APIGatewayHttpApiV2ProxyResponse
+                {
+                    StatusCode = 404
+                };
+            }
+            catch (Exception e)
+            {
+                context.Logger.LogLine("ERROR " + e);
+                throw;
+            }
+        }
+
+        public async Task<APIGatewayHttpApiV2ProxyResponse> Delete(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
+        {
+            var claims = request.GetAuthorization();
+            if (claims == null)
+            {
+                return new APIGatewayHttpApiV2ProxyResponse
+                {
+                    StatusCode = 401
+                };
             }
 
-            return new APIGatewayHttpApiV2ProxyResponse
+            try
             {
-                StatusCode = 204
-            };
+                var userId = claims["sub"];
+
+                if (request.PathParameters.TryGetValue("postId", out var postId))
+                {
+                    if (!await _posts.DeletePost(userId, postId))
+                    {
+                        return new APIGatewayHttpApiV2ProxyResponse
+                        {
+                            StatusCode = 403
+                        };
+                    }
+                }
+
+                return new APIGatewayHttpApiV2ProxyResponse
+                {
+                    StatusCode = 204
+                };
+            }
+            catch (Exception e)
+            {
+                context.Logger.LogLine("ERROR " + e);
+                throw;
+            }
         }
 
         public async Task<APIGatewayHttpApiV2ProxyResponse> GetPosts(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
         {
-            var token = request.GetAuthorization();
-            if (token == null)
+            var claims = request.GetAuthorization();
+            if (claims == null)
             {
                 return new APIGatewayHttpApiV2ProxyResponse
                 {
@@ -113,26 +138,34 @@ namespace LaughAndGroan.Actions.Posts
             request.QueryStringParameters.TryGetValue("by", out var userName);
             request.QueryStringParameters.TryGetValue("from", out var fromPostId);
 
-            var result = await _posts.GetPosts(fromPostId, userName == null ? null : new[] { userName });
-            var response = new GetPostsResponse()
+            try
             {
-                Data = result.Take(25).Select(p => new PostApiResponse
+                var result = await _posts.GetPosts(fromPostId, userName == null ? null : new[] { userName });
+                var response = new GetPostsResponse()
                 {
-                    AuthorId = p.UserId,
-                    Url = p.Url,
-                    Id = p.PostId
-                }).ToArray()
-            };
+                    Data = result.Take(25).Select(p => new PostApiResponse
+                    {
+                        AuthorId = p.UserId,
+                        Url = p.Url,
+                        Id = p.PostId
+                    }).ToArray()
+                };
 
-            return new APIGatewayHttpApiV2ProxyResponse
-            {
-                Headers = new Dictionary<string, string>
+                return new APIGatewayHttpApiV2ProxyResponse
                 {
-                    { "Content-Type", "application/json" }
-                },
-                StatusCode = 200,
-                Body = _serializer.SerializeObject(response)
-            };
+                    Headers = new Dictionary<string, string>
+                    {
+                        { "Content-Type", "application/json" }
+                    },
+                    StatusCode = 200,
+                    Body = _serializer.SerializeObject(response)
+                };
+            }
+            catch (Exception e)
+            {
+                context.Logger.LogLine("ERROR " + e);
+                throw;
+            }
         }
     }
 }

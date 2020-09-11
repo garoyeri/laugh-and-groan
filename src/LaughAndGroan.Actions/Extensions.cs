@@ -1,6 +1,6 @@
 ﻿namespace LaughAndGroan.Actions
 {
-    using System.IdentityModel.Tokens.Jwt;
+    using System.Collections.Generic;
     using System.IO;
     using System.Text;
     using Amazon.Lambda.APIGatewayEvents;
@@ -23,13 +23,9 @@
             return serializer.Deserialize<T>(memory);
         }
 
-        public static JwtSecurityToken GetAuthorization(this APIGatewayHttpApiV2ProxyRequest request)
+        public static IDictionary<string, string> GetAuthorization(this APIGatewayHttpApiV2ProxyRequest request)
         {
-            if (request.Headers.TryGetValue("Authorization", out var authorization))
-            {
-                return new JwtSecurityToken(authorization);
-            }
-            return null;
+            return request.RequestContext?.Authorizer?.Jwt?.Claims;
         }
     }
 }

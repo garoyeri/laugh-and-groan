@@ -1,5 +1,6 @@
 ﻿namespace LaughAndGroan.Actions.Users
 {
+    using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
     using Amazon.Lambda.APIGatewayEvents;
@@ -14,8 +15,10 @@
         public async Task<APIGatewayHttpApiV2ProxyResponse> GetMe(APIGatewayHttpApiV2ProxyRequest request,
             ILambdaContext context)
         {
-            var token = request.GetAuthorization();
-            if (token == null)
+            context.Logger.LogLine("DEBUG " + _serializer.SerializeObject(request));
+
+            var claims = request.GetAuthorization();
+            if (claims == null)
             {
                 return new APIGatewayHttpApiV2ProxyResponse
                 {
@@ -23,21 +26,29 @@
                 };
             }
 
-            var profile = await _users.GetById(token.Subject);
-
-            return new APIGatewayHttpApiV2ProxyResponse
+            try
             {
-                StatusCode = 200,
-                Headers = new Dictionary<string, string>
+                var profile = await _users.GetById(claims["sub"]);
+
+                return new APIGatewayHttpApiV2ProxyResponse
                 {
-                    {"Content-Type", "application/json"}
-                },
-                Body = _serializer.SerializeObject(new UserApiData
-                {
-                    UserName = profile.UserName,
-                    Id = profile.UserId
-                })
-            };
+                    StatusCode = 200,
+                    Headers = new Dictionary<string, string>
+                    {
+                        {"Content-Type", "application/json"}
+                    },
+                    Body = _serializer.SerializeObject(new UserApiData
+                    {
+                        UserName = profile.UserName,
+                        Id = profile.UserId
+                    })
+                };
+            }
+            catch (Exception e)
+            {
+                context.Logger.LogLine("ERROR " + e);
+                throw;
+            }
         }
     }
 }
