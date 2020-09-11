@@ -4,16 +4,17 @@ import * as route53 from "@aws-cdk/aws-route53";
 import { Authentication } from "./authentication";
 import { Lambdas } from "./lambdas";
 import { Database } from "./database";
+import { Frontend } from "./frontend";
 
 export class LaughAndGroanStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const rootDomainName = new cdk.CfnParameter(this, "RootDomainName", {
-      type: "String",
-      description: "Root Domain Name",
-      default: "laughandgroan.com",
-    });
+    // const rootDomainName = new cdk.CfnParameter(this, "RootDomainName", {
+    //   type: "String",
+    //   description: "Root Domain Name",
+    //   default: "laughandgroan.com",
+    // });
 
     const hostedZoneId = new cdk.CfnParameter(this, "HostedZoneId", {
       type: "String",
@@ -32,7 +33,7 @@ export class LaughAndGroanStack extends cdk.Stack {
     const tableNamePrefix = new cdk.CfnParameter(this, "TableNamePrefix", {
       type: "String",
       description: "Table name prefix for DynamoDB tables",
-      default: "LaughAndGroan"
+      default: "LaughAndGroan",
     });
 
     const hostedZone = route53.HostedZone.fromHostedZoneAttributes(
@@ -40,7 +41,7 @@ export class LaughAndGroanStack extends cdk.Stack {
       "MainHostedZone",
       {
         hostedZoneId: hostedZoneId.valueAsString,
-        zoneName: rootDomainName.valueAsString,
+        zoneName: "laughandgroan.com", //rootDomainName.valueAsString,
       }
     );
 
@@ -50,8 +51,20 @@ export class LaughAndGroanStack extends cdk.Stack {
       rootCertificateArn.valueAsString
     );
 
-    const database = new Database(this, "Database", tableNamePrefix.valueAsString);
-    const lambdas = new Lambdas(this, "Lambdas", [database.usersTable, database.postsTable]);
-    const auth = new Authentication(this, "Authentication", cert, hostedZone, lambdas.postAuthTrigger);
+    const database = new Database(this, "Database", {
+      tableNamePrefix: tableNamePrefix.valueAsString,
+    });
+    const lambdas = new Lambdas(this, "Lambdas", {
+      tables: [database.usersTable, database.postsTable],
+    });
+    const auth = new Authentication(this, "Authentication", {
+      rootCertificate: cert,
+      rootHostedZone: hostedZone,
+      postAuthTrigger: lambdas.postAuthTrigger,
+    });
+    const frontend = new Frontend(this, "Frontend", {
+      domainName: "laughandgroan.com", //rootDomainName.valueAsString,
+      certificate: cert,
+    });
   }
 }

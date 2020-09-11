@@ -7,6 +7,12 @@ import * as iam from "@aws-cdk/aws-iam";
 import { AccountRecovery } from "@aws-cdk/aws-cognito";
 import { ICertificate } from "@aws-cdk/aws-certificatemanager";
 
+export interface AuthenticationProps {
+  rootCertificate: ICertificate,
+  rootHostedZone: route53.IHostedZone,
+  postAuthTrigger: lambda.Function,
+}
+
 export class Authentication extends cdk.Construct {
   readonly userPool: cognito.UserPool;
   readonly userPoolClient: cognito.UserPoolClient;
@@ -15,9 +21,7 @@ export class Authentication extends cdk.Construct {
   constructor(
     scope: cdk.Construct,
     id: string,
-    rootCertificate: ICertificate,
-    rootHostedZone: route53.IHostedZone,
-    postAuthTrigger: lambda.Function
+    props: AuthenticationProps,
   ) {
     super(scope, id);
 
@@ -28,27 +32,28 @@ export class Authentication extends cdk.Construct {
         phone: false,
       },
       lambdaTriggers: {
-        postAuthentication: postAuthTrigger
+        postAuthentication: props.postAuthTrigger
       },
     });
 
     this.userPoolClient = new cognito.UserPoolClient(this, "UserPoolClient", {
       userPool: this.userPool,
       oAuth: {
-        callbackUrls: [`https://${rootHostedZone.zoneName}`]
+        callbackUrls: [`https://${props.rootHostedZone.zoneName}`]
       }
     });
 
     this.userPoolDomain = new cognito.UserPoolDomain(this, "UserPoolDomain", {
       userPool: this.userPool,
       customDomain: {
-        domainName: `auth.${rootHostedZone.zoneName}`,
-        certificate: rootCertificate,
+        domainName: `auth.${props.rootHostedZone.zoneName}`,
+        certificate: props.rootCertificate,
       },
     });
 
     new route53.ARecord(this, "UserPoolDomainAlias", {
-      zone: rootHostedZone,
+      zone: props.rootHostedZone,
+      recordName: `auth.${props.rootHostedZone.zoneName}`,
       target: route53.RecordTarget.fromAlias(
         new targets.UserPoolDomainTarget(this.userPoolDomain)
       ),
