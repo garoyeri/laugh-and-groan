@@ -45,7 +45,7 @@ task Publish -depends Compile -description "Publish the primary projects for dis
 }
 
 task Deploy -depends Publish -description "Deploy the solution to AWS" {
-    exec { cdk deploy } -workingDirectory deploy/LaughAndGroan
+    exec { cdk deploy --require-approval never } -workingDirectory deploy/LaughAndGroan
 }
   
 task Clean -description "Clean out all the binary folders" {
