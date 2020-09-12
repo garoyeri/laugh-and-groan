@@ -35,7 +35,7 @@ namespace LaughAndGroan.Actions.Posts
                     {
                         { "Content-Type", "application/json" }
                     },
-                    Body = _serializer.SerializeObject(postCreated),
+                    Body = _serializer.SerializeObject(new PostApiResponse(postCreated)),
                     StatusCode = 200
                 };
             }
@@ -78,7 +78,7 @@ namespace LaughAndGroan.Actions.Posts
                         {
                             { "Content-Type", "application/json" }
                         },
-                        Body = _serializer.SerializeObject(postFound),
+                        Body = _serializer.SerializeObject(new PostApiResponse(postFound)),
                         StatusCode = 200
                     };
                 }
@@ -155,12 +155,7 @@ namespace LaughAndGroan.Actions.Posts
                 var result = await _posts.GetPosts(fromPostId, userName == null ? null : new[] { userName });
                 var response = new GetPostsResponse()
                 {
-                    Data = result.Take(25).Select(p => new PostApiResponse
-                    {
-                        AuthorId = p.UserId,
-                        Url = p.Url,
-                        Id = p.PostId
-                    }).ToArray()
+                    Data = result.Take(25).Select(p => new PostApiResponse(p)).ToArray()
                 };
 
                 return new APIGatewayHttpApiV2ProxyResponse
