@@ -2,38 +2,17 @@ import React, { useState, useEffect } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
 import { Container, Row, Col, Jumbotron } from "react-bootstrap";
 import "./App.css";
-import LoginButton from "./loginButton";
-import LogoutButton from "./logoutButton";
-import PostList from './postList';
+import { LoginButton, LogoutButton, PostList, PostCreator } from "./components";
+import { useApiCalls } from "./hooks";
 
 function App() {
-  const { user, isAuthenticated, getAccessTokenSilently } = useAuth0();
-  const [profileData, setProfileData] = useState({})
+  const { user, isAuthenticated } = useAuth0();
+  const [profileData, setProfileData] = useState({});
+  const { getMe } = useApiCalls();
 
   useEffect(() => {
-    const getMe = async () => {    
-      const apiDomain = "https://api.laughandgroan.com";
-
-      try {
-        const accessToken = await getAccessTokenSilently();
-        const url = "/users/me";
-
-        const response = await fetch(apiDomain + url, {
-          headers: {
-            Authorization: `${accessToken}`,
-          },
-        });
-
-        const data = await response.json();
-
-        setProfileData(data);
-      } catch (e) {
-        console.log(e);
-      }
-    }
-
     if (isAuthenticated) {
-      getMe();
+      getMe().then((data) => setProfileData(data));
     }
   }, [isAuthenticated]);
 
@@ -42,15 +21,15 @@ function App() {
       <Container>
         <Row>
           <Col className="mb-2">
-            {!isAuthenticated && 
-              <LoginButton />
-            }
-            {isAuthenticated &&
+            {!isAuthenticated && <LoginButton />}
+            {isAuthenticated && (
               <>
                 <LogoutButton />
-                <span className="ml-2">{user.name} : {profileData.userName}</span>
+                <span className="ml-2">
+                  {user.name} : {profileData.userName}
+                </span>
               </>
-            }
+            )}
           </Col>
         </Row>
         <Row>
@@ -61,6 +40,12 @@ function App() {
             </Jumbotron>
           </Col>
         </Row>
+        <Row>
+          <Col>
+            <PostCreator />
+          </Col>
+        </Row>
+        <Row><Col><hr /></Col></Row>
         <Row>
           <Col>
             <PostList></PostList>

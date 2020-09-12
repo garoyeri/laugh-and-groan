@@ -2,7 +2,6 @@ import * as cdk from "@aws-cdk/core";
 import * as api from "@aws-cdk/aws-apigatewayv2";
 import * as acm from "@aws-cdk/aws-certificatemanager";
 import * as route53 from "@aws-cdk/aws-route53";
-import * as route53targets from "@aws-cdk/aws-route53-targets";
 import { Lambdas } from "./lambdas";
 
 export interface ApiGatewayProps {
@@ -25,16 +24,17 @@ export class ApiGateway extends cdk.Construct {
 
     const gateway = new api.HttpApi(this, "ApiGateway", {
       corsPreflight: {
-        allowHeaders: ["Authorization"],
+        allowHeaders: ["Content-Type", "X-Amz-Date", "Authorization", "X-Api-Key", "X-Amz-Security-Token", "X-Amz-User-Agent"],
         allowMethods: [
           api.HttpMethod.GET,
+          api.HttpMethod.HEAD,
           api.HttpMethod.POST,
           api.HttpMethod.PUT,
           api.HttpMethod.DELETE,
+          api.HttpMethod.OPTIONS,
         ],
         allowOrigins: [`https://${props.domainName}`, `http://localhost:3000`],
-        maxAge: cdk.Duration.minutes(1),
-        allowCredentials: true,
+        maxAge: cdk.Duration.hours(1),
       },
       defaultDomainMapping: {
         domainName: gatewayDomainName,

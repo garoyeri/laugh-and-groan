@@ -8,5 +8,9 @@ new LaughAndGroanStack(app, 'LaughAndGroanStack', {
   env: {
     region: process.env.AWS_DEFAULT_REGION,
     account: process.env.CDK_DEFAULT_ACCOUNT,
+  },
+  tags: {
+    "application": "laughandgroan",
+    "environment": "prod",
   }
 });

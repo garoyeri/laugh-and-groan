@@ -7,7 +7,6 @@ export interface LambdasProps {
 }
 
 export class Lambdas extends cdk.Construct {
-  readonly postAuthTrigger: lambda.Function;
   readonly createPostLambda: lambda.Function;
   readonly getPostLambda: lambda.Function;
   readonly getPostsLambda: lambda.Function;
@@ -16,19 +15,6 @@ export class Lambdas extends cdk.Construct {
 
   constructor(scope: cdk.Construct, id: string, props: LambdasProps) {
     super(scope, id);
-
-    this.postAuthTrigger = new lambda.Function(
-      this,
-      "UserPoolPostAuthenticationTrigger",
-      {
-        runtime: lambda.Runtime.DOTNET_CORE_3_1,
-        code: lambda.Code.fromAsset("resource/LaughAndGroan.zip"),
-        handler:
-          "LaughAndGroan.Actions::LaughAndGroan.Actions.Users.PostAuthenticationHandler::CreateUserAfterAuthentication",
-        logRetention: 30,
-        timeout: cdk.Duration.seconds(30),
-      }
-    );
 
     this.createPostLambda = new lambda.Function(this, "CreatePostFunction", {
       runtime: lambda.Runtime.DOTNET_CORE_3_1,
@@ -77,7 +63,6 @@ export class Lambdas extends cdk.Construct {
 
     // give every lambda permission to use the dynamo tables
     [
-      this.postAuthTrigger,
       this.deletePostLambda,
       this.getPostLambda,
       this.getPostsLambda,
