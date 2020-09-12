@@ -13,17 +13,19 @@
         public async Task CanCreatePostAndReadItBack()
         {
             var userId = Guid.NewGuid().ToString();
-            var postCreated = await Posts.CreatePost(userId, "https://localtest.laughandgroan.com/image");
+            var postCreated = await Posts.CreatePost(userId, "https://localtest.laughandgroan.com/image", "My Title");
 
             postCreated.Url.ShouldBe("https://localtest.laughandgroan.com/image");
             postCreated.UserId.ShouldBe(userId);
             postCreated.PostId.ShouldNotBeNullOrWhiteSpace();
+            postCreated.Title.ShouldBe("My Title");
 
             var postFound = await Posts.GetPost(postCreated.PostId);
 
             postFound.PostId.ShouldBe(postCreated.PostId);
             postFound.Url.ShouldBe(postCreated.Url);
             postFound.UserId.ShouldBe(userId);
+            postFound.Title.ShouldBe("My Title");
         }
 
         public async Task CanDeletePost()
@@ -55,8 +57,8 @@
             var now = new DateTimeOffset(2020, 08, 01, 12, 0, 0, TimeSpan.Zero);
             for (var i = 0; i < count; i++)
             {
-                await Posts.CreatePost(userId1, links1[i], now.AddMinutes(i));
-                await Posts.CreatePost(userId2, links2[i], now.AddMinutes(i).AddSeconds(30));
+                await Posts.CreatePost(userId1, links1[i], "title", now.AddMinutes(i));
+                await Posts.CreatePost(userId2, links2[i], "title", now.AddMinutes(i).AddSeconds(30));
             }
 
             // we should now have interspersed posts from userid1 and 2 in 30 second increments

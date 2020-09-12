@@ -38,12 +38,21 @@
             _users = new UsersService(_settings, _context);
         }
 
-        public async Task<PostData> CreatePost(string userId, string url, DateTimeOffset? timestamp = null, CancellationToken cancellationToken = default)
+        public async Task<PostData> CreatePost(string userId, string url, string title = null, DateTimeOffset? timestamp = null, CancellationToken cancellationToken = default)
         {
+            if (string.IsNullOrEmpty(userId)) throw new ArgumentException("UserId cannot be empty", nameof(userId));
+            if (string.IsNullOrEmpty(url)) throw new ArgumentException("Url cannot be empty", nameof(url));
+            if ((title?.Length ?? 0) > 240) throw new ArgumentException("Title cannot be more than 240 characters", nameof(title));
+
+            if (!Uri.TryCreate(url, UriKind.Absolute, out var sanitizedUrl))
+                throw new ArgumentException("Url must be a valid absolute URL", nameof(url));
+            if (sanitizedUrl.Scheme != "https" && sanitizedUrl.Scheme != "http")
+                throw new ArgumentException("Url must be an http(s) URL", nameof(url));
+
             timestamp ??= DateTimeOffset.UtcNow;
             var postId = Ulid.NewUlid(timestamp.Value.ToUniversalTime(), _random).ToString();
 
-            var postData = new PostData { PostId = postId, Url = url, UserId = userId, Type = "post"};
+            var postData = new PostData { PostId = postId, Url = url, Title = title, UserId = userId, Type = "post"};
             await _context.SaveAsync(postData, cancellationToken);
 
             return postData;

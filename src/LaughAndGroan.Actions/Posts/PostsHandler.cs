@@ -27,7 +27,7 @@ namespace LaughAndGroan.Actions.Posts
             try
             {
                 var requestData = _serializer.DeserializeObject<PostApiRequest>(request.Body);
-                var postCreated = await _posts.CreatePost(claims["sub"], requestData.Url);
+                var postCreated = await _posts.CreatePost(claims["sub"], requestData.Url, requestData.Title);
 
                 return new APIGatewayHttpApiV2ProxyResponse
                 {
@@ -42,7 +42,16 @@ namespace LaughAndGroan.Actions.Posts
             catch (Exception e)
             {
                 context.Logger.LogLine("ERROR " + e);
-                throw;
+
+                return new APIGatewayHttpApiV2ProxyResponse
+                {
+                    Headers = new Dictionary<string, string>
+                    {
+                        {"Content-Type", "application/json"}
+                    },
+                    Body = _serializer.SerializeObject(new PostError { Message = e.Message }),
+                    StatusCode = 400,
+                };
             }
         }
 

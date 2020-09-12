@@ -16,6 +16,8 @@ namespace LaughAndGroan.Actions.Posts
         
         public string Url { get; set; }
 
+        public string Title { get; set; }
+
         [DynamoDBGlobalSecondaryIndexHashKey("ChronologicalPostsIndex")]
         public string Type { get; set; }
 
@@ -32,5 +34,10 @@ namespace LaughAndGroan.Actions.Posts
         public string Reaction { get; set; }
 
         public DateTimeOffset WhenUpdated { get; set; }
+    }
+
+    public class PostError
+    {
+        public string Message { get; set; }
     }
 }
