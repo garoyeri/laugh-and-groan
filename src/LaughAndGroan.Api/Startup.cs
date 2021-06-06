@@ -14,6 +14,8 @@ using Microsoft.Extensions.Logging;
 
 namespace LaughAndGroan.Api
 {
+    using Microsoft.OpenApi.Models;
+
     public class Startup
     {
         public Startup(IConfiguration configuration)
@@ -27,6 +29,11 @@ namespace LaughAndGroan.Api
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
+
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Laugh and Groan", Version = "v1" });
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline
@@ -40,6 +47,13 @@ namespace LaughAndGroan.Api
             app.UseHttpsRedirection();
 
             app.UseRouting();
+
+            // optionally, only turn Swagger on in development (wrap this in a `if (env.IsDevelopment()) { /* ... */ }`
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("v1/swagger.json", "Laugh and Groan V1");
+            });
 
             app.UseAuthorization();
 
