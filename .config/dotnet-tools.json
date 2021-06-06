@@ -13,6 +13,12 @@
       "commands": [
         "dotnet-lambda"
       ]
+    },
+    "amazon.lambda.testtool-5.0": {
+      "version": "0.11.3",
+      "commands": [
+        "dotnet-lambda-test-tool-5.0"
+      ]
     }
   }
 }
