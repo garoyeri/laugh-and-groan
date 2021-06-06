@@ -6,6 +6,7 @@
     using System.Threading.Tasks;
     using Amazon.DynamoDBv2;
     using Amazon.DynamoDBv2.DataModel;
+    using Amazon.Runtime;
 
     public class UsersService
     {
@@ -17,7 +18,9 @@
 
             var client = settings.DynamoDbUrl == null
                 ? new AmazonDynamoDBClient()
-                : new AmazonDynamoDBClient(new AmazonDynamoDBConfig { ServiceURL = settings.DynamoDbUrl });
+                : new AmazonDynamoDBClient(
+                    new BasicAWSCredentials("DUMMY", "DUMMY"),  // testing credentials
+                    new AmazonDynamoDBConfig { ServiceURL = settings.DynamoDbUrl });
             var contextConfig = new DynamoDBContextConfig()
             {
                 TableNamePrefix = settings.TableNamePrefix,

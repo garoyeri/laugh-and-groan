@@ -1,14 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Amazon.Lambda.APIGatewayEvents" Version="2.1.0" />
-    <PackageReference Include="Amazon.Lambda.Core" Version="1.1.0" />
-    <PackageReference Include="Amazon.Lambda.TestUtilities" Version="1.1.0" />
-    <PackageReference Include="Fixie" Version="2.2.1" />
-    <PackageReference Include="Shouldly" Version="3.0.2" />
-    <DotNetCliToolReference Include="Fixie.Console" Version="2.2.1" />
+    <PackageReference Include="Amazon.Lambda.APIGatewayEvents" Version="2.4.0" />
+    <PackageReference Include="Amazon.Lambda.Core" Version="2.0.0" />
+    <PackageReference Include="Amazon.Lambda.TestUtilities" Version="2.0.0" />
+    <PackageReference Include="Fixie" Version="2.2.2" />
+    <PackageReference Include="Shouldly" Version="4.0.3" />
+    <DotNetCliToolReference Include="Fixie.Console" Version="2.2.2" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\LaughAndGroan.Actions\LaughAndGroan.Actions.csproj" />

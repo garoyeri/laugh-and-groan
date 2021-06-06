@@ -8,6 +8,7 @@
     using Amazon.DynamoDBv2;
     using Amazon.DynamoDBv2.DataModel;
     using Amazon.DynamoDBv2.DocumentModel;
+    using Amazon.Runtime;
     using NUlid;
     using NUlid.Rng;
     using Users;
@@ -27,7 +28,9 @@
 
             var client = _settings.DynamoDbUrl == null
                 ? new AmazonDynamoDBClient()
-                : new AmazonDynamoDBClient(new AmazonDynamoDBConfig {ServiceURL = _settings.DynamoDbUrl});
+                : new AmazonDynamoDBClient(
+                    new BasicAWSCredentials("DUMMY", "DUMMY"),  // testing credentials
+                    new AmazonDynamoDBConfig { ServiceURL = settings.DynamoDbUrl });
             var contextConfig = new DynamoDBContextConfig()
             {
                 TableNamePrefix = _settings.TableNamePrefix,

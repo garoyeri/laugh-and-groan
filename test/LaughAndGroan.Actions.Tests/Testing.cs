@@ -5,6 +5,7 @@
     using System.Threading.Tasks;
     using Amazon.DynamoDBv2;
     using Amazon.DynamoDBv2.Model;
+    using Amazon.Runtime;
     using Posts;
     using Shouldly;
     using Users;
@@ -18,7 +19,9 @@
                 DynamoDbUrl = "http://localhost:8000/",
                 TableNamePrefix = "LaughAndGroanLocalTest"
             };
-            Client = new AmazonDynamoDBClient(new AmazonDynamoDBConfig {ServiceURL = Settings.DynamoDbUrl});
+            Client = new AmazonDynamoDBClient(
+                new BasicAWSCredentials("DUMMY", "DUMMY"),  // test credentials
+                new AmazonDynamoDBConfig {ServiceURL = Settings.DynamoDbUrl});
             Posts = new PostsService(Settings);
             Users = new UsersService(Settings);
         }
