@@ -14,6 +14,9 @@ using Microsoft.Extensions.Logging;
 
 namespace LaughAndGroan.Api
 {
+    using Amazon.DynamoDBv2;
+    using Amazon.DynamoDBv2.DataModel;
+    using Microsoft.Extensions.Options;
     using Microsoft.OpenApi.Models;
 
     public class Startup
@@ -30,9 +33,27 @@ namespace LaughAndGroan.Api
         {
             services.AddControllers();
 
+            // TODO: enable this only in development
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Laugh and Groan", Version = "v1" });
+            });
+
+            services.Configure<Settings>(Configuration.GetSection("LaughAndGroan"));
+
+            services.AddDefaultAWSOptions(Configuration.GetAWSOptions());
+            services.AddAWSService<IAmazonDynamoDB>(Configuration.GetAWSOptions("DynamoDB"));
+
+            services.AddSingleton<IDynamoDBContext>(p =>
+            {
+                var options = p.GetRequiredService<IOptions<Settings>>();
+                var client = p.GetRequiredService<IAmazonDynamoDB>();
+
+                return new DynamoDBContext(client, new DynamoDBContextConfig
+                {
+                    TableNamePrefix = options.Value.TableNamePrefix,
+                    ConsistentRead = true
+                });
             });
         }
 
@@ -48,12 +69,12 @@ namespace LaughAndGroan.Api
 
             app.UseRouting();
 
-            // optionally, only turn Swagger on in development (wrap this in a `if (env.IsDevelopment()) { /* ... */ }`
-            app.UseSwagger();
-            app.UseSwaggerUI(c =>
+            // only turn Swagger on in development
+            if (env.IsDevelopment())
             {
-                c.SwaggerEndpoint("v1/swagger.json", "Laugh and Groan V1");
-            });
+                app.UseSwagger();
+                app.UseSwaggerUI(c => { c.SwaggerEndpoint("v1/swagger.json", "Laugh and Groan V1"); });
+            }
 
             app.UseAuthorization();
 
