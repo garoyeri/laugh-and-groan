@@ -1,4 +1,4 @@
-﻿namespace LaughAndGroan.Actions.Tests
+﻿namespace LaughAndGroan.Api.Tests
 {
     using System;
     using System.Threading.Tasks;

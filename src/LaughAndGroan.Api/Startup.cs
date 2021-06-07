@@ -16,6 +16,9 @@ namespace LaughAndGroan.Api
 {
     using Amazon.DynamoDBv2;
     using Amazon.DynamoDBv2.DataModel;
+    using Amazon.Runtime;
+    using Features.Posts;
+    using Features.Users;
     using Microsoft.Extensions.Options;
     using Microsoft.OpenApi.Models;
 
@@ -40,9 +43,14 @@ namespace LaughAndGroan.Api
             });
 
             services.Configure<Settings>(Configuration.GetSection("LaughAndGroan"));
-
+            
             services.AddDefaultAWSOptions(Configuration.GetAWSOptions());
-            services.AddAWSService<IAmazonDynamoDB>(Configuration.GetAWSOptions("DynamoDB"));
+
+            // when in local development mode, the service URL is set and SOME credentials must be provided
+            var dynamoOptions = Configuration.GetAWSOptions("DynamoDB");
+            if (dynamoOptions.DefaultClientConfig.ServiceURL == "http://localhost:8000")
+                dynamoOptions.Credentials = new BasicAWSCredentials("DUMMY", "DUMMY");
+            services.AddAWSService<IAmazonDynamoDB>(dynamoOptions);
 
             services.AddSingleton<IDynamoDBContext>(p =>
             {
@@ -55,6 +63,10 @@ namespace LaughAndGroan.Api
                     ConsistentRead = true
                 });
             });
+
+            services
+                .AddSingleton<UsersService>()
+                .AddSingleton<PostsService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline

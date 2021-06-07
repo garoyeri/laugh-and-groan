@@ -9,6 +9,7 @@
     using Amazon.DynamoDBv2.DataModel;
     using Amazon.DynamoDBv2.DocumentModel;
     using Amazon.Runtime;
+    using Microsoft.Extensions.Options;
     using NUlid;
     using NUlid.Rng;
     using Users;
@@ -16,26 +17,17 @@
     public class PostsService
     {
         private readonly MonotonicUlidRng _random;
-        private readonly DynamoDBContext _context;
+        private readonly IDynamoDBContext _context;
         private readonly UsersService _users;
+        private readonly Settings _settings;
 
-        public PostsService(IDynamoDBContext context)
+        public PostsService(UsersService users, IOptions<Settings> settings, IDynamoDBContext context)
         {
             _random = new MonotonicUlidRng();
 
-            var client = _settings.DynamoDbUrl == null
-                ? new AmazonDynamoDBClient()
-                : new AmazonDynamoDBClient(
-                    new BasicAWSCredentials("DUMMY", "DUMMY"),  // testing credentials
-                    new AmazonDynamoDBConfig { ServiceURL = settings.DynamoDbUrl });
-            var contextConfig = new DynamoDBContextConfig()
-            {
-                TableNamePrefix = _settings.TableNamePrefix,
-                ConsistentRead = true,
-            };
-            _context = context ?? new DynamoDBContext(client, contextConfig);
-
-            _users = new UsersService(_settings, _context);
+            _context = context;
+            _users = users;
+            _settings = settings.Value;
         }
 
         public async Task<PostData> CreatePost(string userId, string url, string title = null, DateTimeOffset? timestamp = null, CancellationToken cancellationToken = default)

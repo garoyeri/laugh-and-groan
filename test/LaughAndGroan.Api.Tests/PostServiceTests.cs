@@ -1,4 +1,4 @@
-﻿namespace LaughAndGroan.Actions.Tests
+﻿namespace LaughAndGroan.Api.Tests
 {
     using System;
     using System.Linq;
@@ -53,7 +53,7 @@
             const int count = 50;
             var links1 = Enumerable.Range(1, count).Select(n => $"https://localtest.laughandgroan.com/image/{n}").ToArray();
             var links2 = Enumerable.Range(101, count).Select(n => $"https://localtest.laughandgroan.com/image/{n}").ToArray();
-            
+
             var now = new DateTimeOffset(2020, 08, 01, 12, 0, 0, TimeSpan.Zero);
             for (var i = 0; i < count; i++)
             {

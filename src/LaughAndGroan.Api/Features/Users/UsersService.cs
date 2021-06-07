@@ -4,29 +4,15 @@
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
-    using Amazon.DynamoDBv2;
     using Amazon.DynamoDBv2.DataModel;
-    using Amazon.Runtime;
 
     public class UsersService
     {
-        private readonly DynamoDBContext _context;
+        private readonly IDynamoDBContext _context;
 
-        public UsersService(Settings settings = null, DynamoDBContext context = null)
+        public UsersService(IDynamoDBContext context)
         {
-            settings ??= new ConfigurationProvider().Settings;
-
-            var client = settings.DynamoDbUrl == null
-                ? new AmazonDynamoDBClient()
-                : new AmazonDynamoDBClient(
-                    new BasicAWSCredentials("DUMMY", "DUMMY"),  // testing credentials
-                    new AmazonDynamoDBConfig { ServiceURL = settings.DynamoDbUrl });
-            var contextConfig = new DynamoDBContextConfig()
-            {
-                TableNamePrefix = settings.TableNamePrefix,
-                ConsistentRead = true,
-            };
-            _context = context ?? new DynamoDBContext(client, contextConfig);
+            _context = context;
         }
 
         public async Task<UserData> Create(string userId, string userName = null,

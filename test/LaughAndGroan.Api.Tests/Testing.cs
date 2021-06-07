@@ -1,4 +1,4 @@
-﻿namespace LaughAndGroan.Actions.Tests
+﻿namespace LaughAndGroan.Api.Tests
 {
     using System;
     using System.Collections.Generic;
@@ -6,28 +6,49 @@
     using Amazon.DynamoDBv2;
     using Amazon.DynamoDBv2.Model;
     using Amazon.Runtime;
-    using Posts;
+    using LaughAndGroan.Api.Features.Posts;
+    using LaughAndGroan.Api.Features.Users;
+    using Microsoft.AspNetCore.Hosting;
+    using Microsoft.AspNetCore.Mvc.Testing;
+    using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.DependencyInjection;
+    using Microsoft.Extensions.Options;
     using Shouldly;
-    using Users;
 
     public static class Testing
     {
         static Testing()
         {
-            Settings = new Settings
-            {
-                DynamoDbUrl = "http://localhost:8000/",
-                TableNamePrefix = "LaughAndGroanLocalTest"
-            };
-            Client = new AmazonDynamoDBClient(
-                new BasicAWSCredentials("DUMMY", "DUMMY"),  // test credentials
-                new AmazonDynamoDBConfig {ServiceURL = Settings.DynamoDbUrl});
-            Posts = new PostsService(Settings);
-            Users = new UsersService(Settings);
+            Factory = new TestApplicationFactory();
+            Configuration = Factory.Services.GetRequiredService<IConfiguration>();
+            ScopeFactory = Factory.Services.GetRequiredService<IServiceScopeFactory>();
+
+            Settings = Factory.Services.GetRequiredService<IOptions<Settings>>().Value;
+            Client = Factory.Services.GetRequiredService<IAmazonDynamoDB>();
+            Posts = Factory.Services.GetRequiredService<PostsService>();
+            Users = Factory.Services.GetRequiredService<UsersService>();
         }
 
+        public class TestApplicationFactory : WebApplicationFactory<Startup>
+        {
+            protected override void ConfigureWebHost(IWebHostBuilder builder)
+            {
+                builder.ConfigureAppConfiguration((_, configBuilder) =>
+                {
+                    configBuilder.AddInMemoryCollection(new Dictionary<string, string>
+                    {
+                        { "DynamoDB::ServiceURL", "http://localhost:8000" }
+                    });
+                });
+            }
+        }
+
+        private static TestApplicationFactory Factory;
+        private static IConfiguration Configuration;
+        private static IServiceScopeFactory ScopeFactory;
+
         public static Settings Settings { get; }
-        public static AmazonDynamoDBClient Client { get; }
+        public static IAmazonDynamoDB Client { get; }
         public static PostsService Posts { get; }
         public static UsersService Users { get; }
 
