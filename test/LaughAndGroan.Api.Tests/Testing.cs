@@ -37,7 +37,7 @@
                 {
                     configBuilder.AddInMemoryCollection(new Dictionary<string, string>
                     {
-                        { "DynamoDB::ServiceURL", "http://localhost:8000" }
+                        { "DynamoDB:ServiceURL", "http://localhost:8000" }
                     });
                 });
             }

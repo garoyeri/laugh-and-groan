@@ -6,6 +6,6 @@
     public static class Extensions
     {
         public static string ExtractUserId(this ClaimsPrincipal principal) =>
-            principal.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
+            principal.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
     }
 }

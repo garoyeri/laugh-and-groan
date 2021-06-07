@@ -3,10 +3,12 @@
     using System.Net.Mime;
     using System.Threading;
     using System.Threading.Tasks;
+    using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Mvc;
 
     [Route("users")]
     [ApiController]
+    [Authorize]
     public class UsersController : ControllerBase
     {
         private readonly UsersService _users;

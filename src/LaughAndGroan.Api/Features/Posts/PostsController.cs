@@ -5,9 +5,11 @@
     using System.Net.Mime;
     using System.Threading;
     using System.Threading.Tasks;
+    using Microsoft.AspNetCore.Authorization;
 
     [Route("posts")]
     [ApiController]
+    [Authorize]
     public class PostsController : ControllerBase
     {
         private readonly PostsService _posts;

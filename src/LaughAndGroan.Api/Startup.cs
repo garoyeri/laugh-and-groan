@@ -14,12 +14,15 @@ using Microsoft.Extensions.Logging;
 
 namespace LaughAndGroan.Api
 {
+    using System.Security.Claims;
     using Amazon.DynamoDBv2;
     using Amazon.DynamoDBv2.DataModel;
     using Amazon.Runtime;
     using Features.Posts;
     using Features.Users;
+    using Microsoft.AspNetCore.Authentication.JwtBearer;
     using Microsoft.Extensions.Options;
+    using Microsoft.IdentityModel.Tokens;
     using Microsoft.OpenApi.Models;
 
     public class Startup
@@ -35,6 +38,29 @@ namespace LaughAndGroan.Api
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
+
+            services.AddCors(o =>
+            {
+                o.AddDefaultPolicy(p =>
+                {
+                    p.WithHeaders("Content-Type", "X-Amz-Date", "Authorization", "X-Api-Key", "X-Amz-Security-Token",
+                        "X-Amz-User-Agent");
+                    p.WithMethods("DELETE", "GET", "HEAD", "OPTIONS", "POST", "PUT");
+                    p.AllowAnyOrigin();
+                    p.SetPreflightMaxAge(TimeSpan.FromHours(1.0));
+                });
+            });
+
+            // TODO: enable this only in development
+            // Documentation: https://auth0.com/docs/quickstart/backend/aspnet-core-webapi/01-authorization#configure-the-middleware
+            var authDomain = $"https://{Configuration["Auth0:Domain"]}/";
+            services
+                .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(o =>
+                {
+                    o.Authority = authDomain;
+                    o.Audience = Configuration["Auth0:Audience"];
+                });
 
             // TODO: enable this only in development
             services.AddSwaggerGen(c =>
@@ -81,11 +107,19 @@ namespace LaughAndGroan.Api
 
             app.UseRouting();
 
+            app.UseCors();
+
             // only turn Swagger on in development
             if (env.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI(c => { c.SwaggerEndpoint("v1/swagger.json", "Laugh and Groan V1"); });
+            }
+
+            // only turn authentication on in development
+            if (env.IsDevelopment())
+            {
+                app.UseAuthentication();
             }
 
             app.UseAuthorization();
