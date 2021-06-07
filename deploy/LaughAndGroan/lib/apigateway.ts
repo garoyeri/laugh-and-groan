@@ -1,5 +1,6 @@
 import * as cdk from "@aws-cdk/core";
 import * as api from "@aws-cdk/aws-apigatewayv2";
+import * as api_int from "@aws-cdk/aws-apigatewayv2-integrations";
 import * as acm from "@aws-cdk/aws-certificatemanager";
 import * as route53 from "@aws-cdk/aws-route53";
 import { Lambdas } from "./lambdas";
@@ -26,12 +27,12 @@ export class ApiGateway extends cdk.Construct {
       corsPreflight: {
         allowHeaders: ["Content-Type", "X-Amz-Date", "Authorization", "X-Api-Key", "X-Amz-Security-Token", "X-Amz-User-Agent"],
         allowMethods: [
-          api.HttpMethod.GET,
-          api.HttpMethod.HEAD,
-          api.HttpMethod.POST,
-          api.HttpMethod.PUT,
-          api.HttpMethod.DELETE,
-          api.HttpMethod.OPTIONS,
+          api.CorsHttpMethod.GET,
+          api.CorsHttpMethod.HEAD,
+          api.CorsHttpMethod.POST,
+          api.CorsHttpMethod.PUT,
+          api.CorsHttpMethod.DELETE,
+          api.CorsHttpMethod.OPTIONS,
         ],
         allowOrigins: [`https://${props.domainName}`, `http://localhost:3000`, `https://localhost:5001`],
         maxAge: cdk.Duration.hours(1),
@@ -56,60 +57,16 @@ export class ApiGateway extends cdk.Construct {
 
     let routes: api.HttpRoute[] = [];
 
-    // POST /posts
+    // Proxy for ASP.NET Core
     routes = routes.concat(
       gateway.addRoutes({
-        path: "/posts",
-        methods: [api.HttpMethod.POST],
-        integration: new api.LambdaProxyIntegration({
-          handler: props.lambdas.createPostLambda,
-        }),
+        path: "/{proxy+}",
+        methods: [api.HttpMethod.ANY],
+        integration: new api_int.LambdaProxyIntegration({
+          handler: props.lambdas.aspnetLambda,
+        })
       })
-    );
-
-    // GET /posts?from={postId}&by={authorId}
-    routes = routes.concat(
-      gateway.addRoutes({
-        path: "/posts",
-        methods: [api.HttpMethod.GET],
-        integration: new api.LambdaProxyIntegration({
-          handler: props.lambdas.getPostsLambda,
-        }),
-      })
-    );
-
-    // GET /posts/{postId}
-    routes = routes.concat(
-      gateway.addRoutes({
-        path: "/posts/{postId}",
-        methods: [api.HttpMethod.GET],
-        integration: new api.LambdaProxyIntegration({
-          handler: props.lambdas.getPostLambda,
-        }),
-      })
-    );
-
-    // DELETE /posts/{postId}
-    routes = routes.concat(
-      gateway.addRoutes({
-        path: "/posts/{postId}",
-        methods: [api.HttpMethod.DELETE],
-        integration: new api.LambdaProxyIntegration({
-          handler: props.lambdas.deletePostLambda,
-        }),
-      })
-    );
-
-    // GET /users/me
-    routes = routes.concat(
-      gateway.addRoutes({
-        path: "/users/me",
-        methods: [api.HttpMethod.GET],
-        integration: new api.LambdaProxyIntegration({
-          handler: props.lambdas.getUserLambda,
-        }),
-      })
-    );
+    )
 
     if (props.authIssuer && props.authClientId) {
       const authorizer = new api.CfnAuthorizer(this, "ApiGatewayAuthorizer", {
