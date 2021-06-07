@@ -33,7 +33,7 @@ export class ApiGateway extends cdk.Construct {
           api.HttpMethod.DELETE,
           api.HttpMethod.OPTIONS,
         ],
-        allowOrigins: [`https://${props.domainName}`, `http://localhost:3000`],
+        allowOrigins: [`https://${props.domainName}`, `http://localhost:3000`, `https://localhost:5001`],
         maxAge: cdk.Duration.hours(1),
       },
       defaultDomainMapping: {
