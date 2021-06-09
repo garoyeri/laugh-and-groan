@@ -31,6 +31,8 @@ export class Frontend extends cdk.Construct {
       bucketConfiguration: {
         source: "resource/laugh-and-groan-website",
         removalPolicy: cdk.RemovalPolicy.DESTROY,
+        websiteIndexDocument: "index.html",
+        websiteErrorDocument: "index.html"
       },
       aliasConfiguration: {
         domainName: props.domainName,
