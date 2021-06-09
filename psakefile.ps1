@@ -65,7 +65,7 @@ task Compile -depends Info -description "Compile the solution" {
 
 task Publish -depends Compile -description "Publish the primary projects for distribution" {
     remove-directory-silently $publish
-    exec { dotnet lambda package $publish/LaughAndGroan.zip --msbuild-parameters -p:"Product=$($product)" -p:"Copyright=$(get-copyright)" -p:"Version=$($version)" } -workingDirectory src/LaughAndGroan.Api
+    exec { dotnet lambda package $publish/LaughAndGroan.zip -pt image -c Release --msbuild-parameters -p:"Product=$($product)" -p:"Copyright=$(get-copyright)" -p:"Version=$($version)" } -workingDirectory src/LaughAndGroan.Api
     exec { Copy-Item src/laugh-and-groan-website/build $publish/laugh-and-groan-website -Recurse }
 }
 
@@ -74,7 +74,7 @@ task Deploy -depends Publish -description "Deploy the solution to AWS" {
 }
   
 task Clean -description "Clean out all the binary folders" {
-    exec { dotnet clean --configuration $configuration /nologo } -workingDirectory src
+    exec { dotnet clean --configuration $configuration /nologo }
     remove-directory-silently $publish
     remove-directory-silently $testResults
     remove-directory-silently deploy/Certificates/cdk.out
