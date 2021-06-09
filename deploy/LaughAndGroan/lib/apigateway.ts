@@ -25,19 +25,19 @@ export class ApiGateway extends cdk.Construct {
     });
 
     const gateway = new api.HttpApi(this, "ApiGateway", {
-      corsPreflight: {
-        allowHeaders: ["Content-Type", "X-Amz-Date", "Authorization", "X-Api-Key", "X-Amz-Security-Token", "X-Amz-User-Agent"],
-        allowMethods: [
-          api.CorsHttpMethod.GET,
-          api.CorsHttpMethod.HEAD,
-          api.CorsHttpMethod.POST,
-          api.CorsHttpMethod.PUT,
-          api.CorsHttpMethod.DELETE,
-          api.CorsHttpMethod.OPTIONS,
-        ],
-        allowOrigins: [`https://${props.domainName}`, `http://localhost:3000`, `https://localhost:5001`],
-        maxAge: cdk.Duration.hours(1),
-      },
+      // corsPreflight: {
+      //   allowHeaders: ["Content-Type", "X-Amz-Date", "Authorization", "X-Api-Key", "X-Amz-Security-Token", "X-Amz-User-Agent"],
+      //   allowMethods: [
+      //     api.CorsHttpMethod.GET,
+      //     api.CorsHttpMethod.HEAD,
+      //     api.CorsHttpMethod.POST,
+      //     api.CorsHttpMethod.PUT,
+      //     api.CorsHttpMethod.DELETE,
+      //     api.CorsHttpMethod.OPTIONS,
+      //   ],
+      //   allowOrigins: [`https://${props.domainName}`, `http://localhost:3000`, `https://localhost:5001`],
+      //   maxAge: cdk.Duration.hours(1),
+      // },
       defaultDomainMapping: {
         domainName: gatewayDomainName,
       },
@@ -65,16 +65,6 @@ export class ApiGateway extends cdk.Construct {
     }
     const noneAuthorizer = new api.HttpNoneAuthorizer();
 
-    // Proxy for ASP.NET Core
-    gateway.addRoutes({
-      path: "/api/{proxy+}",
-      methods: [api.HttpMethod.ANY],
-      integration: new api_int.LambdaProxyIntegration({
-        handler: props.lambdas.aspnetLambda,
-      }),
-      authorizer: jwtAuthorizer || noneAuthorizer
-    });
-
     // Swagger route
     gateway.addRoutes({
       path: "/swagger/{proxy+}",
@@ -93,6 +83,16 @@ export class ApiGateway extends cdk.Construct {
         handler: props.lambdas.aspnetLambda,
       }),
       authorizer: noneAuthorizer
+    });
+
+    // Proxy for ASP.NET Core
+    gateway.addRoutes({
+      path: "/{proxy+}",
+      methods: [api.HttpMethod.ANY],
+      integration: new api_int.LambdaProxyIntegration({
+        handler: props.lambdas.aspnetLambda,
+      }),
+      authorizer: jwtAuthorizer || noneAuthorizer
     });
 
     new cdk.CfnOutput(this, "ApiUrl", {
