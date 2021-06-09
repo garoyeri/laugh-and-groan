@@ -60,7 +60,7 @@ export class ApiGateway extends cdk.Construct {
     if (props.authIssuer && props.authClientId) {
       jwtAuthorizer = new api_auth.HttpJwtAuthorizer({
         jwtAudience: [props.authClientId],
-        jwtIssuer: props.authIssuer
+        jwtIssuer: props.authIssuer,
       });
     }
     const noneAuthorizer = new api.HttpNoneAuthorizer();
@@ -68,31 +68,40 @@ export class ApiGateway extends cdk.Construct {
     // Swagger route
     gateway.addRoutes({
       path: "/swagger/{proxy+}",
-      methods: [api.HttpMethod.ANY],
+      methods: [api.HttpMethod.GET, api.HttpMethod.HEAD],
       integration: new api_int.LambdaProxyIntegration({
         handler: props.lambdas.aspnetLambda,
       }),
-      authorizer: noneAuthorizer
+      authorizer: noneAuthorizer,
     });
 
     // Health check route
     gateway.addRoutes({
       path: "/health",
-      methods: [api.HttpMethod.ANY],
+      methods: [api.HttpMethod.GET],
       integration: new api_int.LambdaProxyIntegration({
         handler: props.lambdas.aspnetLambda,
       }),
-      authorizer: noneAuthorizer
+      authorizer: noneAuthorizer,
     });
 
     // Proxy for ASP.NET Core
     gateway.addRoutes({
       path: "/{proxy+}",
-      methods: [api.HttpMethod.ANY],
+      methods: [api.HttpMethod.GET, api.HttpMethod.DELETE, api.HttpMethod.HEAD, api.HttpMethod.PATCH, api.HttpMethod.PUT, api.HttpMethod.POST],
       integration: new api_int.LambdaProxyIntegration({
         handler: props.lambdas.aspnetLambda,
       }),
-      authorizer: jwtAuthorizer || noneAuthorizer
+      authorizer: jwtAuthorizer || noneAuthorizer,
+    });
+
+    gateway.addRoutes({
+      path: "/{proxy+}",
+      methods: [api.HttpMethod.OPTIONS],
+      integration: new api_int.LambdaProxyIntegration({
+        handler: props.lambdas.aspnetLambda,
+      }),
+      authorizer: noneAuthorizer,
     });
 
     new cdk.CfnOutput(this, "ApiUrl", {
