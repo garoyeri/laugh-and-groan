@@ -24,6 +24,7 @@ namespace LaughAndGroan.Api
     using Microsoft.Extensions.Options;
     using Microsoft.IdentityModel.Tokens;
     using Microsoft.OpenApi.Models;
+    using Serilog;
 
     public class Startup
     {
@@ -66,6 +67,28 @@ namespace LaughAndGroan.Api
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Laugh and Groan", Version = "v1" });
+                c.AddSecurityDefinition("openid", new OpenApiSecurityScheme()
+                {
+                    Type = SecuritySchemeType.OpenIdConnect,
+                    OpenIdConnectUrl = new Uri("https://garoyeri.us.auth0.com/.well-known/openid-configuration"),
+                    Flows = new OpenApiOAuthFlows()
+                    {
+                        Implicit = new OpenApiOAuthFlow()
+                        {
+                            Scopes = new Dictionary<string, string>()
+                        },
+                    }
+                });
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement()
+                {
+                    {
+                        new OpenApiSecurityScheme()
+                        {
+                            Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "openid" }
+                        },
+                        new List<string>()
+                    }
+                });
             });
 
             services.Configure<Settings>(Configuration.GetSection("LaughAndGroan"));
@@ -103,18 +126,24 @@ namespace LaughAndGroan.Api
                 app.UseDeveloperExceptionPage();
             }
 
+            app.UseSerilogRequestLogging();
+
             app.UseHttpsRedirection();
-
-            app.UseRouting();
-
-            app.UseCors();
 
             // only turn Swagger on in development
             //if (env.IsDevelopment())
             //{
-                app.UseSwagger();
-                app.UseSwaggerUI(c => { c.SwaggerEndpoint("v1/swagger.json", "Laugh and Groan V1"); });
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("v1/swagger.json", "Laugh and Groan V1");
+                c.OAuthClientId("W2KN1CQdSCt2doY3NYNVbiyWp9Bij347");
+            });
             //}
+
+            app.UseRouting();
+
+            app.UseCors();
 
             // only turn authentication on in development
             if (env.IsDevelopment())

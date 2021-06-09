@@ -6,6 +6,10 @@ using Microsoft.Extensions.Hosting;
 
 namespace LaughAndGroan.Api
 {
+    using Serilog;
+    using Serilog.Events;
+    using Serilog.Formatting.Compact;
+
     /// <summary>
     /// This class extends from APIGatewayProxyFunction which contains the method FunctionHandlerAsync which is the 
     /// actual Lambda function entry point. The Lambda handler field should be set to
@@ -47,6 +51,26 @@ namespace LaughAndGroan.Api
         /// <param name="builder"></param>
         protected override void Init(IHostBuilder builder)
         {
+        }
+
+        protected override IHostBuilder CreateHostBuilder()
+        {
+            Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+                .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
+                .Enrich.FromLogContext()
+                .WriteTo.Console(new CompactJsonFormatter())
+                .CreateLogger();
+
+            var builder = Host.CreateDefaultBuilder()
+                .UseSerilog(Log.Logger, true)
+                .ConfigureWebHostLambdaDefaults(webBuilder =>
+                {
+                    Init(webBuilder);
+                });
+
+            Init(builder);
+            return builder;
         }
     }
 }
