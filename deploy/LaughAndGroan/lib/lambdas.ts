@@ -1,7 +1,6 @@
 import * as cdk from "@aws-cdk/core";
 import * as dynamodb from "@aws-cdk/aws-dynamodb";
 import * as lambda from "@aws-cdk/aws-lambda";
-import * as ecr_assets from "@aws-cdk/aws-ecr-assets";
 import { IGrantable } from "@aws-cdk/aws-iam";
 import * as path from "path";
 
@@ -17,57 +16,10 @@ export class Lambdas extends cdk.Construct {
 
     this.aspnetLambda = new lambda.DockerImageFunction(this, "AspNetLambdaFunction", {
       code: lambda.DockerImageCode.fromImageAsset(path.join(__dirname, "../../../src/LaughAndGroan.Api")),
-      memorySize: 512,
+      memorySize: 1024,
       logRetention: 30,
       timeout: cdk.Duration.seconds(30),
     });    
-
-    //this.aspnetLambda = new lambda.(this, "")
-
-    // this.createPostLambda = new lambda.Function(this, "CreatePostFunction", {
-    //   runtime: lambda.Runtime.DOTNET_CORE_3_1,
-    //   code: lambda.Code.fromAsset("resource/LaughAndGroan.zip"),
-    //   handler:
-    //     "LaughAndGroan.Actions::LaughAndGroan.Actions.Posts.PostsHandler::Create",
-    //   logRetention: 30,
-    //   timeout: cdk.Duration.seconds(30),
-    // });
-
-    // this.getPostLambda = new lambda.Function(this, "GetPostFunction", {
-    //   runtime: lambda.Runtime.DOTNET_CORE_3_1,
-    //   code: lambda.Code.fromAsset("resource/LaughAndGroan.zip"),
-    //   handler:
-    //     "LaughAndGroan.Actions::LaughAndGroan.Actions.Posts.PostsHandler::Get",
-    //   logRetention: 30,
-    //   timeout: cdk.Duration.seconds(30),
-    // });
-
-    // this.getPostsLambda = new lambda.Function(this, "GetPostsFunction", {
-    //   runtime: lambda.Runtime.DOTNET_CORE_3_1,
-    //   code: lambda.Code.fromAsset("resource/LaughAndGroan.zip"),
-    //   handler:
-    //     "LaughAndGroan.Actions::LaughAndGroan.Actions.Posts.PostsHandler::GetPosts",
-    //   logRetention: 30,
-    //   timeout: cdk.Duration.seconds(30),
-    // });
-
-    // this.deletePostLambda = new lambda.Function(this, "DeletePostFunction", {
-    //   runtime: lambda.Runtime.DOTNET_CORE_3_1,
-    //   code: lambda.Code.fromAsset("resource/LaughAndGroan.zip"),
-    //   handler:
-    //     "LaughAndGroan.Actions::LaughAndGroan.Actions.Posts.PostsHandler::Delete",
-    //   logRetention: 30,
-    //   timeout: cdk.Duration.seconds(30),
-    // });
-
-    // this.getUserLambda = new lambda.Function(this, "GetUserFunction", {
-    //   runtime: lambda.Runtime.DOTNET_CORE_3_1,
-    //   code: lambda.Code.fromAsset("resource/LaughAndGroan.zip"),
-    //   handler:
-    //     "LaughAndGroan.Actions::LaughAndGroan.Actions.Users.UsersHandler::GetMe",
-    //   logRetention: 30,
-    //   timeout: cdk.Duration.seconds(30),
-    // });
 
     // give every lambda permission to use the dynamo tables
     [
