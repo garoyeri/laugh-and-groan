@@ -12,4 +12,4 @@ WORKDIR /var/task
 # For more information on this approach checkout the project's README.md file.
 COPY "bin/Release/net5.0/linux-x64/publish"  .
 
-CMD "LaughAndGroan.Api::LaughAndGroan.Api.LambdaEntryPoint::FunctionHandlerAsync"
+CMD ["LaughAndGroan.Api::LaughAndGroan.Api.LambdaEntryPoint::FunctionHandlerAsync"]
