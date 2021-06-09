@@ -110,11 +110,11 @@ namespace LaughAndGroan.Api
             app.UseCors();
 
             // only turn Swagger on in development
-            if (env.IsDevelopment())
-            {
+            //if (env.IsDevelopment())
+            //{
                 app.UseSwagger();
                 app.UseSwaggerUI(c => { c.SwaggerEndpoint("v1/swagger.json", "Laugh and Groan V1"); });
-            }
+            //}
 
             // only turn authentication on in development
             if (env.IsDevelopment())
