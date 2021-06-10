@@ -26,19 +26,19 @@ task Info -description "Display runtime information" {
 }
 
 task SetupLocalDynamoDb -depends Info -description "Setup local DynamoDb for testing" {
-    exec { docker-compose -p laugh-and-groan-local -f local-dynamodb.docker-compose.yml up -d } -workingDirectory test
+    exec { docker compose -p laugh-and-groan-local -f local-dynamodb.docker-compose.yml up -d } -workingDirectory test
 }
 
 task TearDownLocalDynamoDb -depends Info -description "Tear down local DynamoDb for testing" {
-    exec { docker-compose -p laugh-and-groan-local -f local-dynamodb.docker-compose.yml down } -workingDirectory test
+    exec { docker compose -p laugh-and-groan-local -f local-dynamodb.docker-compose.yml down } -workingDirectory test
 }
 
 task StartLocalDynamoDb -depends Info -description "Start local DynamoDb for testing" {
-    exec { docker-compose -p laugh-and-groan-local -f local-dynamodb.docker-compose.yml start } -workingDirectory test
+    exec { docker compose -p laugh-and-groan-local -f local-dynamodb.docker-compose.yml start } -workingDirectory test
 }
 
 task StopLocalDynamoDb -depends Info -description "Stop local DynamoDb for testing" {
-    exec { docker-compose -p laugh-and-groan-local -f local-dynamodb.docker-compose.yml stop } -workingDirectory test
+    exec { docker compose -p laugh-and-groan-local -f local-dynamodb.docker-compose.yml stop } -workingDirectory test
 }
 
 task Test -depends Compile -description "Run unit tests" {
