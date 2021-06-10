@@ -84,6 +84,14 @@ task Clean -description "Clean out all the binary folders" {
     remove-directory-silently deploy/HostedZones/cdk.out
     remove-directory-silently deploy/LaughAndGroan/cdk.out
 }
+
+task StartWeb -description "Run the web application" {
+    exec { npm start } -workingDirectory src/laugh-and-groan-website
+}
+
+task StartApi -description "Run the web API" {
+    exec { dotnet run } -workingDirectory src/LaughAndGroan.Api
+}
   
 task ? -alias help -description "Display help content and possible targets" {
     WriteDocumentation
