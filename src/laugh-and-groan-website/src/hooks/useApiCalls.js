@@ -1,6 +1,6 @@
 import { useAuth0 } from "@auth0/auth0-react";
 
-const apiDomain = "https://api.laughandgroan.com";
+const apiDomain = window.runtimeConfig.api;
 
 const useApiCalls = () => {
   const { getAccessTokenSilently, isAuthenticated } = useAuth0();
@@ -13,7 +13,7 @@ const useApiCalls = () => {
 
     const response = await fetch(apiDomain + url, {
       headers: {
-        Authorization: `${accessToken}`,
+        Authorization: `Bearer ${accessToken}`,
       },
     });
     
@@ -34,7 +34,7 @@ const useApiCalls = () => {
 
     const response = await fetch(apiDomain + url, {
       headers: {
-        Authorization: `${accessToken}`,
+        Authorization: `Bearer ${accessToken}`,
       },
     });
 
@@ -55,7 +55,7 @@ const useApiCalls = () => {
 
     const response = await fetch(apiDomain + url, {
       headers: {
-        Authorization: `${accessToken}`,
+        Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
       },
       method: "POST",

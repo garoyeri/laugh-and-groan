@@ -6,7 +6,7 @@ import { LaughAndGroanStack } from '../lib/laugh_and_groan-stack';
 const app = new cdk.App();
 new LaughAndGroanStack(app, 'LaughAndGroanStack', {
   env: {
-    region: process.env.AWS_DEFAULT_REGION,
+    region: process.env.AWS_DEFAULT_REGION || "us-east-1",
     account: process.env.CDK_DEFAULT_ACCOUNT,
   },
   tags: {

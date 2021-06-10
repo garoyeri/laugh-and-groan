@@ -26,19 +26,19 @@ task Info -description "Display runtime information" {
 }
 
 task SetupLocalDynamoDb -depends Info -description "Setup local DynamoDb for testing" {
-    exec { docker-compose -p laugh-and-groan-local -f local-dynamodb.docker-compose.yml up -d } -workingDirectory test
+    exec { docker compose -p laugh-and-groan-local -f local-dynamodb.docker-compose.yml up -d } -workingDirectory test
 }
 
 task TearDownLocalDynamoDb -depends Info -description "Tear down local DynamoDb for testing" {
-    exec { docker-compose -p laugh-and-groan-local -f local-dynamodb.docker-compose.yml down } -workingDirectory test
+    exec { docker compose -p laugh-and-groan-local -f local-dynamodb.docker-compose.yml down } -workingDirectory test
 }
 
 task StartLocalDynamoDb -depends Info -description "Start local DynamoDb for testing" {
-    exec { docker-compose -p laugh-and-groan-local -f local-dynamodb.docker-compose.yml start } -workingDirectory test
+    exec { docker compose -p laugh-and-groan-local -f local-dynamodb.docker-compose.yml start } -workingDirectory test
 }
 
 task StopLocalDynamoDb -depends Info -description "Stop local DynamoDb for testing" {
-    exec { docker-compose -p laugh-and-groan-local -f local-dynamodb.docker-compose.yml stop } -workingDirectory test
+    exec { docker compose -p laugh-and-groan-local -f local-dynamodb.docker-compose.yml stop } -workingDirectory test
 }
 
 task Test -depends Compile -description "Run unit tests" {
@@ -65,21 +65,40 @@ task Compile -depends Info -description "Compile the solution" {
 
 task Publish -depends Compile -description "Publish the primary projects for distribution" {
     remove-directory-silently $publish
-    exec { dotnet lambda package $publish/LaughAndGroan.zip --msbuild-parameters -p:"Product=$($product)" -p:"Copyright=$(get-copyright)" -p:"Version=$($version)" } -workingDirectory src/LaughAndGroan.Actions
-    exec { Copy-Item src/laugh-and-groan-website/build $publish/laugh-and-groan-website -Recurse }
+    exec { dotnet lambda package $publish/LaughAndGroan.zip -pt image -c Release --msbuild-parameters -p:"Product=$($product)" -p:"Copyright=$(get-copyright)" -p:"Version=$($version)" -p:"PublishReadyToRun=true" -p:"TieredCompilation=false" -p:"TieredCompilationQuickJit=false" } -workingDirectory src/LaughAndGroan.Api
+    exec {
+        Copy-Item src/laugh-and-groan-website/build $publish/laugh-and-groan-website -Recurse
+        Move-Item $publish/laugh-and-groan-website/config.prod.js $publish/laugh-and-groan-website/config.js -Force
+    }
 }
 
 task Deploy -depends Publish -description "Deploy the solution to AWS" {
-    exec { cdk deploy --require-approval never } -workingDirectory deploy/LaughAndGroan
+    exec { npm run cdk -- deploy --require-approval never } -workingDirectory deploy/LaughAndGroan
 }
-  
+
+task DeployDns -depends Publish -description "Deploy the DNS stack" {
+    exec { npm run cdk -- deploy --require-approval never } -workingDirectory deploy/HostedZones
+}
+
+task DeployCerts -depends Publish -description "Deploy the Certificates stack" {
+    exec { npm run cdk -- deploy --require-approval never } -workingDirectory deploy/Certificates
+}
+
 task Clean -description "Clean out all the binary folders" {
-    exec { dotnet clean --configuration $configuration /nologo } -workingDirectory src
+    exec { dotnet clean --configuration $configuration /nologo }
     remove-directory-silently $publish
     remove-directory-silently $testResults
     remove-directory-silently deploy/Certificates/cdk.out
     remove-directory-silently deploy/HostedZones/cdk.out
     remove-directory-silently deploy/LaughAndGroan/cdk.out
+}
+
+task StartWeb -description "Run the web application" {
+    exec { npm start } -workingDirectory src/laugh-and-groan-website
+}
+
+task StartApi -description "Run the web API" {
+    exec { dotnet run } -workingDirectory src/LaughAndGroan.Api
 }
   
 task ? -alias help -description "Display help content and possible targets" {

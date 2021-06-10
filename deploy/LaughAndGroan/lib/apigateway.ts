@@ -1,5 +1,7 @@
 import * as cdk from "@aws-cdk/core";
 import * as api from "@aws-cdk/aws-apigatewayv2";
+import * as api_int from "@aws-cdk/aws-apigatewayv2-integrations";
+import * as api_auth from "@aws-cdk/aws-apigatewayv2-authorizers";
 import * as acm from "@aws-cdk/aws-certificatemanager";
 import * as route53 from "@aws-cdk/aws-route53";
 import { Lambdas } from "./lambdas";
@@ -23,19 +25,19 @@ export class ApiGateway extends cdk.Construct {
     });
 
     const gateway = new api.HttpApi(this, "ApiGateway", {
-      corsPreflight: {
-        allowHeaders: ["Content-Type", "X-Amz-Date", "Authorization", "X-Api-Key", "X-Amz-Security-Token", "X-Amz-User-Agent"],
-        allowMethods: [
-          api.HttpMethod.GET,
-          api.HttpMethod.HEAD,
-          api.HttpMethod.POST,
-          api.HttpMethod.PUT,
-          api.HttpMethod.DELETE,
-          api.HttpMethod.OPTIONS,
-        ],
-        allowOrigins: [`https://${props.domainName}`, `http://localhost:3000`],
-        maxAge: cdk.Duration.hours(1),
-      },
+      // corsPreflight: {
+      //   allowHeaders: ["Content-Type", "X-Amz-Date", "Authorization", "X-Api-Key", "X-Amz-Security-Token", "X-Amz-User-Agent"],
+      //   allowMethods: [
+      //     api.CorsHttpMethod.GET,
+      //     api.CorsHttpMethod.HEAD,
+      //     api.CorsHttpMethod.POST,
+      //     api.CorsHttpMethod.PUT,
+      //     api.CorsHttpMethod.DELETE,
+      //     api.CorsHttpMethod.OPTIONS,
+      //   ],
+      //   allowOrigins: [`https://${props.domainName}`, `http://localhost:3000`, `https://localhost:5001`],
+      //   maxAge: cdk.Duration.hours(1),
+      // },
       defaultDomainMapping: {
         domainName: gatewayDomainName,
       },
@@ -54,82 +56,53 @@ export class ApiGateway extends cdk.Construct {
       }),
     });
 
-    let routes: api.HttpRoute[] = [];
-
-    // POST /posts
-    routes = routes.concat(
-      gateway.addRoutes({
-        path: "/posts",
-        methods: [api.HttpMethod.POST],
-        integration: new api.LambdaProxyIntegration({
-          handler: props.lambdas.createPostLambda,
-        }),
-      })
-    );
-
-    // GET /posts?from={postId}&by={authorId}
-    routes = routes.concat(
-      gateway.addRoutes({
-        path: "/posts",
-        methods: [api.HttpMethod.GET],
-        integration: new api.LambdaProxyIntegration({
-          handler: props.lambdas.getPostsLambda,
-        }),
-      })
-    );
-
-    // GET /posts/{postId}
-    routes = routes.concat(
-      gateway.addRoutes({
-        path: "/posts/{postId}",
-        methods: [api.HttpMethod.GET],
-        integration: new api.LambdaProxyIntegration({
-          handler: props.lambdas.getPostLambda,
-        }),
-      })
-    );
-
-    // DELETE /posts/{postId}
-    routes = routes.concat(
-      gateway.addRoutes({
-        path: "/posts/{postId}",
-        methods: [api.HttpMethod.DELETE],
-        integration: new api.LambdaProxyIntegration({
-          handler: props.lambdas.deletePostLambda,
-        }),
-      })
-    );
-
-    // GET /users/me
-    routes = routes.concat(
-      gateway.addRoutes({
-        path: "/users/me",
-        methods: [api.HttpMethod.GET],
-        integration: new api.LambdaProxyIntegration({
-          handler: props.lambdas.getUserLambda,
-        }),
-      })
-    );
-
+    let jwtAuthorizer: api.IHttpRouteAuthorizer = new api.HttpNoneAuthorizer();
     if (props.authIssuer && props.authClientId) {
-      const authorizer = new api.CfnAuthorizer(this, "ApiGatewayAuthorizer", {
-        name: "ApiGatewayAuthorizer",
-        apiId: gateway.httpApiId,
-        authorizerType: "JWT",
-        identitySource: ["$request.header.Authorization"],
-        jwtConfiguration: {
-          audience: [props.authClientId],
-          issuer: props.authIssuer,
-        },
-      });
-
-      // https://dev.to/martzcodes/token-authorizers-with-apigatewayv2-tricks-apigwv1-doesn-t-want-you-to-know-41jn
-      routes.forEach((route) => {
-        const routeCfn = route.node.defaultChild as api.CfnRoute;
-        routeCfn.authorizerId = authorizer.ref;
-        routeCfn.authorizationType = "JWT";
+      jwtAuthorizer = new api_auth.HttpJwtAuthorizer({
+        jwtAudience: [props.authClientId],
+        jwtIssuer: props.authIssuer,
       });
     }
+    const noneAuthorizer = new api.HttpNoneAuthorizer();
+
+    // Swagger route
+    gateway.addRoutes({
+      path: "/swagger/{proxy+}",
+      methods: [api.HttpMethod.GET, api.HttpMethod.HEAD],
+      integration: new api_int.LambdaProxyIntegration({
+        handler: props.lambdas.aspnetLambda,
+      }),
+      authorizer: noneAuthorizer,
+    });
+
+    // Health check route
+    gateway.addRoutes({
+      path: "/health",
+      methods: [api.HttpMethod.GET],
+      integration: new api_int.LambdaProxyIntegration({
+        handler: props.lambdas.aspnetLambda,
+      }),
+      authorizer: noneAuthorizer,
+    });
+
+    // Proxy for ASP.NET Core
+    gateway.addRoutes({
+      path: "/{proxy+}",
+      methods: [api.HttpMethod.GET, api.HttpMethod.DELETE, api.HttpMethod.HEAD, api.HttpMethod.PATCH, api.HttpMethod.PUT, api.HttpMethod.POST],
+      integration: new api_int.LambdaProxyIntegration({
+        handler: props.lambdas.aspnetLambda,
+      }),
+      authorizer: jwtAuthorizer || noneAuthorizer,
+    });
+
+    gateway.addRoutes({
+      path: "/{proxy+}",
+      methods: [api.HttpMethod.OPTIONS],
+      integration: new api_int.LambdaProxyIntegration({
+        handler: props.lambdas.aspnetLambda,
+      }),
+      authorizer: noneAuthorizer,
+    });
 
     new cdk.CfnOutput(this, "ApiUrl", {
       value: gateway.url ?? "",
