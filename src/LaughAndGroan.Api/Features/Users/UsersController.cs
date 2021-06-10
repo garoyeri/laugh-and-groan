@@ -26,8 +26,6 @@
         [HttpGet("me"), Produces(MediaTypeNames.Application.Json)]
         public async Task<ActionResult<UserApiData>> GetMe(CancellationToken cancellationToken)
         {
-            _log.LogWarning("Claims {@claims}", HttpContext.User.Claims.Select(c => new KeyValuePair<string, string>(c.Type, c.Value)));
-
             var userId = HttpContext.User.ExtractUserId();
             if (userId == null)
                 return Unauthorized();
