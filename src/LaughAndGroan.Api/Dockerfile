@@ -12,4 +12,5 @@ WORKDIR /var/task
 # For more information on this approach checkout the project's README.md file.
 COPY "bin/Release/net5.0/linux-x64/publish"  .
 
+# Since we're not using the serverless.template, we need to specify this here so that the entry point is picked up properly
 CMD ["LaughAndGroan.Api::LaughAndGroan.Api.LambdaEntryPoint::FunctionHandlerAsync"]
