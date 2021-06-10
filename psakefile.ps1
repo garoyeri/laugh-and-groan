@@ -66,7 +66,10 @@ task Compile -depends Info -description "Compile the solution" {
 task Publish -depends Compile -description "Publish the primary projects for distribution" {
     remove-directory-silently $publish
     exec { dotnet lambda package $publish/LaughAndGroan.zip -pt image -c Release --msbuild-parameters -p:"Product=$($product)" -p:"Copyright=$(get-copyright)" -p:"Version=$($version)" } -workingDirectory src/LaughAndGroan.Api
-    exec { Copy-Item src/laugh-and-groan-website/build $publish/laugh-and-groan-website -Recurse }
+    exec {
+        Copy-Item src/laugh-and-groan-website/build $publish/laugh-and-groan-website -Recurse
+        Move-Item $publish/laugh-and-groan-website/config.prod.js $publish/laugh-and-groan-website/config.js -Force
+    }
 }
 
 task Deploy -depends Publish -description "Deploy the solution to AWS" {

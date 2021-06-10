@@ -1,6 +1,6 @@
 import { useAuth0 } from "@auth0/auth0-react";
 
-const apiDomain = "https://api.laughandgroan.com";
+const apiDomain = window.runtimeConfig.api;
 
 const useApiCalls = () => {
   const { getAccessTokenSilently, isAuthenticated } = useAuth0();
