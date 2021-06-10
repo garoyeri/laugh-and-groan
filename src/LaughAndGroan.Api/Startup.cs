@@ -38,6 +38,8 @@ namespace LaughAndGroan.Api
         // This method gets called by the runtime. Use this method to add services to the container
         public void ConfigureServices(IServiceCollection services)
         {
+            var inDevelopment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
+
             services.AddControllers();
 
             services.AddCors(o =>
@@ -46,65 +48,67 @@ namespace LaughAndGroan.Api
                 {
                     p.WithHeaders("Content-Type", "X-Amz-Date", "Authorization", "X-Api-Key", "X-Amz-Security-Token",
                         "X-Amz-User-Agent");
-                    p.WithMethods("DELETE", "GET", "HEAD", "OPTIONS", "POST", "PUT");
+                    p.WithMethods("DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT");
                     p.AllowAnyOrigin();
                     p.SetPreflightMaxAge(TimeSpan.FromHours(1.0));
                 });
             });
 
-            // TODO: enable this only in development
-            // Documentation: https://auth0.com/docs/quickstart/backend/aspnet-core-webapi/01-authorization#configure-the-middleware
-            var authDomain = $"https://{Configuration["Auth0:Domain"]}/";
-            var authAudience = Configuration["Auth0:Audience"];
-            services
-                .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(o =>
-                {
-                    o.Authority = authDomain;
-                    o.Audience = Configuration["Auth0:Audience"];
-                });
-
-            // TODO: enable this only in development
-            services.AddSwaggerGen(c =>
+            // Enable this only in development, prod handles this from API Gateway authorizers
+            if (inDevelopment)
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Laugh and Groan", Version = "v1" });
-
-                // Getting this right is *hard*, this article helped me with the details:
-                // https://dotnetcoretutorials.com/2021/02/14/using-auth0-with-an-asp-net-core-api-part-3-swagger/
-
-                c.AddSecurityDefinition("default", new OpenApiSecurityScheme()
-                {
-                    Name = "Authorization",
-                    In = ParameterLocation.Header,
-                    Type = SecuritySchemeType.OAuth2,
-                    Flows = new OpenApiOAuthFlows
+                // Documentation: https://auth0.com/docs/quickstart/backend/aspnet-core-webapi/01-authorization#configure-the-middleware
+                var authDomain = $"https://{Configuration["Auth0:Domain"]}/";
+                var authAudience = Configuration["Auth0:Audience"];
+                services
+                    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                    .AddJwtBearer(o =>
                     {
-                        Implicit = new OpenApiOAuthFlow
+                        o.Authority = authDomain;
+                        o.Audience = Configuration["Auth0:Audience"];
+                    });
+
+                services.AddSwaggerGen(c =>
+                {
+                    c.SwaggerDoc("v1", new OpenApiInfo {Title = "Laugh and Groan", Version = "v1"});
+
+                    // Getting this right is *hard*, this article helped me with the details:
+                    // https://dotnetcoretutorials.com/2021/02/14/using-auth0-with-an-asp-net-core-api-part-3-swagger/
+
+                    c.AddSecurityDefinition("default", new OpenApiSecurityScheme()
+                    {
+                        Name = "Authorization",
+                        In = ParameterLocation.Header,
+                        Type = SecuritySchemeType.OAuth2,
+                        Flows = new OpenApiOAuthFlows
                         {
-                            Scopes = new Dictionary<string, string>
+                            Implicit = new OpenApiOAuthFlow
                             {
-                                { "openid", "Open ID"},
-                                { "users.posts:write", "Write and Read Posts" }
-                            },
-                            AuthorizationUrl = new Uri($"{authDomain}authorize?audience={authAudience}")
+                                Scopes = new Dictionary<string, string>
+                                {
+                                    {"openid", "Open ID"},
+                                    {"users.posts:write", "Write and Read Posts"}
+                                },
+                                AuthorizationUrl = new Uri($"{authDomain}authorize?audience={authAudience}")
+                            }
                         }
-                    }
-                });
+                    });
 
-                c.AddSecurityRequirement(new OpenApiSecurityRequirement()
-                {
+                    c.AddSecurityRequirement(new OpenApiSecurityRequirement()
                     {
-                        new OpenApiSecurityScheme()
                         {
-                            Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "default" }
-                        },
-                        new List<string> { "users.posts:write" }
-                    }
+                            new OpenApiSecurityScheme()
+                            {
+                                Reference = new OpenApiReference {Type = ReferenceType.SecurityScheme, Id = "default"}
+                            },
+                            new List<string> {"users.posts:write"}
+                        }
+                    });
                 });
-            });
+            }
 
             services.Configure<Settings>(Configuration.GetSection("LaughAndGroan"));
-            
+
             services.AddDefaultAWSOptions(Configuration.GetAWSOptions());
 
             // when in local development mode, the service URL is set and SOME credentials must be provided
@@ -143,15 +147,15 @@ namespace LaughAndGroan.Api
             app.UseHttpsRedirection();
 
             // only turn Swagger on in development
-            //if (env.IsDevelopment())
-            //{
-            app.UseSwagger();
-            app.UseSwaggerUI(c =>
+            if (env.IsDevelopment())
             {
-                c.SwaggerEndpoint("v1/swagger.json", "Laugh and Groan V1");
-                c.OAuthClientId("W2KN1CQdSCt2doY3NYNVbiyWp9Bij347");
-            });
-            //}
+                app.UseSwagger();
+                app.UseSwaggerUI(c =>
+                {
+                    c.SwaggerEndpoint("v1/swagger.json", "Laugh and Groan V1");
+                    c.OAuthClientId("W2KN1CQdSCt2doY3NYNVbiyWp9Bij347");
+                });
+            }
 
             app.UseRouting();
 
@@ -168,10 +172,11 @@ namespace LaughAndGroan.Api
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
-                endpoints.MapGet("/", async context =>
-                {
-                    await context.Response.WriteAsync("Welcome to running ASP.NET Core on AWS Lambda");
-                });
+                endpoints.MapGet("/",
+                    async context =>
+                    {
+                        await context.Response.WriteAsync("Welcome to running ASP.NET Core on AWS Lambda");
+                    });
             });
         }
     }
