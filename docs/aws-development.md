@@ -1,4 +1,4 @@
-Get your environment ready to run.
+AWS development tools for .NET
 
 ## Install AWS Lambda Tools and Templates
 
@@ -6,6 +6,7 @@ From the AWS Lambda .NET GitHub page: [aws/aws-lambda-dotnet: Libraries, samples
 
 ```powershell
 dotnet tool install -g Amazon.Lambda.Tools
+dotnet tool install -g amazon.lambda.testtool-5.0
 dotnet new -i "Amazon.Lambda.Templates::*"
 ```
 

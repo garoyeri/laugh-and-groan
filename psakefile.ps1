@@ -73,9 +73,17 @@ task Publish -depends Compile -description "Publish the primary projects for dis
 }
 
 task Deploy -depends Publish -description "Deploy the solution to AWS" {
-    exec { cdk deploy --require-approval never } -workingDirectory deploy/LaughAndGroan
+    exec { npm run cdk -- deploy --require-approval never } -workingDirectory deploy/LaughAndGroan
 }
-  
+
+task DeployDns -depends Publish -description "Deploy the DNS stack" {
+    exec { npm run cdk -- deploy --require-approval never } -workingDirectory deploy/HostedZones
+}
+
+task DeployCerts -depends Publish -description "Deploy the Certificates stack" {
+    exec { npm run cdk -- deploy --require-approval never } -workingDirectory deploy/Certificates
+}
+
 task Clean -description "Clean out all the binary folders" {
     exec { dotnet clean --configuration $configuration /nologo }
     remove-directory-silently $publish
