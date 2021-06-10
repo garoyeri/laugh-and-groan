@@ -21,7 +21,7 @@ namespace LaughAndGroan.Api
                 .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
                 .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
                 .Enrich.FromLogContext()
-                .WriteTo.Console(new CompactJsonFormatter())
+                .WriteTo.Console()
                 .CreateLogger();
 
             try
