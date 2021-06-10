@@ -55,6 +55,7 @@ namespace LaughAndGroan.Api
             // TODO: enable this only in development
             // Documentation: https://auth0.com/docs/quickstart/backend/aspnet-core-webapi/01-authorization#configure-the-middleware
             var authDomain = $"https://{Configuration["Auth0:Domain"]}/";
+            var authAudience = Configuration["Auth0:Audience"];
             services
                 .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(o =>
@@ -67,26 +68,37 @@ namespace LaughAndGroan.Api
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Laugh and Groan", Version = "v1" });
-                c.AddSecurityDefinition("openid", new OpenApiSecurityScheme()
+
+                // Getting this right is *hard*, this article helped me with the details:
+                // https://dotnetcoretutorials.com/2021/02/14/using-auth0-with-an-asp-net-core-api-part-3-swagger/
+
+                c.AddSecurityDefinition("default", new OpenApiSecurityScheme()
                 {
-                    Type = SecuritySchemeType.OpenIdConnect,
-                    OpenIdConnectUrl = new Uri("https://garoyeri.us.auth0.com/.well-known/openid-configuration"),
-                    Flows = new OpenApiOAuthFlows()
+                    Name = "Authorization",
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.OAuth2,
+                    Flows = new OpenApiOAuthFlows
                     {
-                        Implicit = new OpenApiOAuthFlow()
+                        Implicit = new OpenApiOAuthFlow
                         {
-                            Scopes = new Dictionary<string, string>()
-                        },
+                            Scopes = new Dictionary<string, string>
+                            {
+                                { "openid", "Open ID"},
+                                { "users.posts:write", "Write and Read Posts" }
+                            },
+                            AuthorizationUrl = new Uri($"{authDomain}authorize?audience={authAudience}")
+                        }
                     }
                 });
+
                 c.AddSecurityRequirement(new OpenApiSecurityRequirement()
                 {
                     {
                         new OpenApiSecurityScheme()
                         {
-                            Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "openid" }
+                            Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "default" }
                         },
-                        new List<string>()
+                        new List<string> { "users.posts:write" }
                     }
                 });
             });
