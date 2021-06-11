@@ -16,11 +16,11 @@ export class Lambdas extends cdk.Construct {
 
     this.aspnetLambda = new lambda.DockerImageFunction(this, "AspNetLambdaFunction", {
       code: lambda.DockerImageCode.fromImageAsset(path.join(__dirname, "../../../src/LaughAndGroan.Api")),
-      memorySize: 1024,
+      memorySize: 512,
       logRetention: 30,
       timeout: cdk.Duration.seconds(30),
-    });    
-
+    });   
+    
     // give every lambda permission to use the dynamo tables
     [
       this.aspnetLambda
